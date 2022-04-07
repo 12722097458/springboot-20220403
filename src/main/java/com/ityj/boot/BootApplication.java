@@ -41,6 +41,9 @@ public class BootApplication {
 		boolean elephant = run.containsBean("elephant");
 		System.out.println("elephant组件是否存在 = " + elephant);
 
+		boolean bean1 = run.containsBean("xml-pet");
+		System.out.println("通过XML配置的xml-pet组件是否存在 = " + bean1);
+
 	}
 
 }

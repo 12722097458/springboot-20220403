@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportResource;
 
 /**
  *  1、配置类里面使用标注在方法上给容器注册组件，默认是单实例的
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Import;
  *      给容器中自动创建出这两个类型的组件，默认组件名称就是类全名
  *
   */
+@ImportResource("classpath:bean-pet.xml")
 @Import({Pet.class, ResourceUtil.class})
 @Configuration   // 告诉SpringBoot这是一个配置类 == 配置文件的作用
 public class MyConfig {
