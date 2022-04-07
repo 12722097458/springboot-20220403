@@ -1,5 +1,6 @@
 package com.ityj.boot;
 
+import com.github.xiaoymin.knife4j.core.io.ResourceUtil;
 import com.ityj.boot.config.MyConfig;
 import com.ityj.boot.entity.Pet;
 import org.springframework.boot.SpringApplication;
@@ -23,6 +24,14 @@ public class BootApplication {
 
 		Pet myPet = run.getBean("myPet", Pet.class);
 		System.out.println("myPet = " + myPet);
+
+		// 获取通过@Import导入的组件
+		String[] beanNamesForType = run.getBeanNamesForType(Pet.class);
+		for (String name : beanNamesForType) {
+			System.out.println("beanName = " + name);
+		}
+		ResourceUtil bean = run.getBean(ResourceUtil.class);
+		System.out.println("bean = " + bean);
 
 	}
 

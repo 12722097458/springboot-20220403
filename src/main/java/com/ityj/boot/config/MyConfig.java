@@ -1,8 +1,10 @@
 package com.ityj.boot.config;
 
+import com.github.xiaoymin.knife4j.core.io.ResourceUtil;
 import com.ityj.boot.entity.Pet;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  *  1、配置类里面使用标注在方法上给容器注册组件，默认是单实例的
@@ -10,7 +12,13 @@ import org.springframework.context.annotation.Configuration;
  *  3、在spring5.2后@Configuration里有一个proxyBeanMethods属性，可以控制方法是否通过代理生成，
  *      默认为true，Full通过代理生成com.ityj.boot.config.MyConfig$$EnhancerBySpringCGLIB$$146ac44c@aca3c85
  *      false -> Lite: 每次new一个对象
+ *  4、@Import({Pet.class, ResourceUtil.class})
+ *          --> beanName = com.ityj.boot.entity.Pet
+ *              bean = com.github.xiaoymin.knife4j.core.io.ResourceUtil@621624b1
+ *      给容器中自动创建出这两个类型的组件，默认组件名称就是类全名
+ *
   */
+@Import({Pet.class, ResourceUtil.class})
 @Configuration   // 告诉SpringBoot这是一个配置类 == 配置文件的作用
 public class MyConfig {
 
