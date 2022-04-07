@@ -33,6 +33,14 @@ public class BootApplication {
 		ResourceUtil bean = run.getBean(ResourceUtil.class);
 		System.out.println("bean = " + bean);
 
+
+		boolean dog = run.containsBean("dog");
+		System.out.println("dog组件是否存在 = " + dog);
+		boolean cat = run.containsBean("cat");
+		System.out.println("cat组件是否存在 = " + cat);
+		boolean elephant = run.containsBean("elephant");
+		System.out.println("elephant组件是否存在 = " + elephant);
+
 	}
 
 }

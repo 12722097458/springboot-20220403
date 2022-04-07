@@ -2,6 +2,7 @@ package com.ityj.boot.config;
 
 import com.github.xiaoymin.knife4j.core.io.ResourceUtil;
 import com.ityj.boot.entity.Pet;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -26,6 +27,17 @@ public class MyConfig {
     @Bean  // 给容器中添加组件，以方法名作为组件的id；返回类型就是组件类型；返回的值就是组件在容器中的实例
     public Pet myPet() {
         return new Pet("tomcat");
+    }
+
+    @Bean
+    public Pet dog() {
+        return new Pet("dog");
+    }
+
+    @ConditionalOnBean(name = "cat")   // 当有组件cat加载时，才会注入elephant组件
+    @Bean
+    public Pet elephant() {
+        return new Pet("elephant");
     }
 
 }
