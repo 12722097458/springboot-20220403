@@ -1,0 +1,809 @@
+
+
+# 一、Spring Boot入门
+
+## 1、Spring Boot简介
+
+> 简化Spring的一个框架；
+>
+> 是整个Spring技术栈的一个整合；
+>
+> 是简化Spring技术栈的快速开发脚手架。
+
+
+
+## 2、Spring Boot入门案例
+
+> 通过创建一个maven项目，改造成一个简单的Spring Boot项目。
+
+官网指引：https://spring.io/guides/gs/spring-boot/
+
+### 1.新建一个普通的maven项目
+
+![image-20201214213246257](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20201214213246257.png)
+
+### 2.导入父项目依赖以及配置
+
+```xml
+<modelVersion>4.0.0</modelVersion>
+<!-- 导入父项目 -->
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.6.6</version>
+    <relativePath/> <!-- lookup parent from repository -->
+</parent>
+
+<!-- 导入简单的依赖 -->
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+
+<!-- 可以通过maven进行jar包生成 -->
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+</plugin>
+```
+
+### 3.创建一个启动类，进行配置
+
+==注意文件的位置：保证它在controller、mapper包的同级==
+
+```java
+@SpringBootApplication
+public class QuickStartApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(QuickStartApplication.class, args);
+    }
+}
+```
+
+### 4.创建一个HelloController
+
+```java
+@Controller
+public class HelloController {
+
+    @RequestMapping(path = "/hello")
+    @ResponseBody
+    public String sayhello() {
+        System.out.println("Hello World!");
+        return "Hello";
+    }
+
+}
+```
+
+### 5.启动项目，进行测试
+
+> 运行QuickStartApplication的main方法，成功启动后访问url：http://localhost:8080/hello
+
+
+
+## 3、使用Spring Initializr快速创建Spring Boot项目
+
+默认生成的Spring Boot项目：
+
+* 基本框架已经搭好，主程序也已经编好，我们只需要写自己的逻辑。
+* resources文件夹的结构
+	* static：保存所有的静态资源（js / css / images）
+	* templates：保存所有的模板页面；（Spring Boot默认jar包使用嵌入式的tomcat，默认不支持jsp页面）；可以使用模板引擎（framemarker，thymeleaf）
+	* application.yml：配置文件，可以修改一些默认设置
+
+## 4、SpringBoot的特点：
+
+### 1.1依赖管理
+
+* 父项目的依赖管理
+
+```xml
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.6.6</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+又有一个父项目：
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-dependencies</artifactId>
+    <version>2.6.6</version>
+  </parent>
+spring-boot-dependencies这个项目里有一个properties的标签，里面定义了差不多我们开发所需要的所有依赖版本号。自动版本仲裁。
+
+```
+
+* 修改版本号
+
+```xml
+首先从spring-boot-dependencies里面查看我们引入的jar包默认配置的版本，如果不合适取出配置的key，在自己的pom中重新配置
+<properties>
+    <java.version>11</java.version>
+    <mysql.version>5.1.43</mysql.version>
+</properties>
+```
+
+* 开发中的各种场景启动器starter
+
+  `https://docs.spring.io/spring-boot/docs/current/reference/html/using.html#using.build-systems.starters`
+
+  ```xml
+  1. spring-boot-starter-* : 这种命名的依赖一般是官方提供的，引入后这个场景所需要的依赖会自动导入
+  2. *-spring-boot-starter :第三方提供的简化开发的启动器
+  3. 所有场景启动器最底层的依赖
+  <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+      <version>2.6.6</version>
+      <scope>compile</scope>
+  </dependency>
+  也是springboot自动配置的核心依赖
+  ```
+
+* 有默认版本号，自动版本仲裁
+
+  ```xml
+  1. 引入依赖默认可以不写版本号（spring-boot-dependencies指定好的话）
+  2. spring-boot-dependencies没有指定的话，需要自己写版本号
+  ```
+
+### 1.2 自动配置
+
+* 自动配置好了Tomcat
+
+  * 引入Tomcat的依赖（依赖管理 web -> tomcat）
+
+    ```xml
+    <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-tomcat</artifactId>
+          <version>2.6.6</version>
+          <scope>compile</scope>
+        </dependency>
+    ```
+
+  * 配置tomcat(自动配置将分析)
+
+* 自动配好了SpringMVC
+
+  * 引入了SpringMVC的全套组件
+  * 自动配置好了SpringMVC的常用组件 
+
+* 自动配置好了web的常见功能：如字符编码等
+
+  * SpringBoot帮我们配置好了所有Web开发常见的场景
+
+* 默认的包结构
+
+  * @SpringBootApplication，默认扫描主程序所在的包及其子包里的所有组件
+  * 若想改变扫描路径，添加属性即可@SpringBootApplication(scanBasePackages = {"com.ityj"})
+
+* 各种配置拥有默认值
+
+  * 默认配置最终都是映射到XxxProperties的类上：ServerProperties、WebMvcProperties、Knife4jProperties
+  * 配置文件最终都会绑定到每个类上，这个类会在容器中创建对象。
+
+* 按需加载所有的配置项
+
+  * 非常多的starter
+  * 以后纳入了相关场景，这些自动配置才会起作用
+  * SpringBoot的所有自动配置供能都在spring-boot-auto-configure包里
+
+
+
+## 5、容器功能
+
+### 1.1 组件添加
+
+#### （1）@Configuration
+
+* 基本使用
+* Full模式和Lite模式
+  * 最佳实战
+    * 配置类组件之间无依赖关系用Lite模式加速容器启动过程，减少判断（Lite模式是真实的方法）
+    * 配置类组件之间有依赖关系，方法会被调用得到之前单实例组件，用Full模式（代理方法，多次调用getBean()也是同一个方法，会进行判断）
+
+#### （2）@Bean, @Component, @Controller, @Service, @repository
+
+#### （3）@ComponentScan, @Import
+
+#### （4）@Conditional
+
+> 条件装配，满足conditional的某种条件时，才进行组件的注入
+>
+> * @ConditionOnBean(name="Dog")  --> 当组件中有Dog时，才会对下面的组件进行注入
+
+![image-20220407223434913](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220407223434913.png)
+
+### 1.2 原生配置文件引入
+
+#### （1） @ImportResource
+
+可以将配置文件中的组件注入到容器中：@ImportResource("classpath:bean-pet.xml")
+
+### 1.3 配置绑定
+
+####  （1）@ConfigurationProperties
+
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Component  //注册bean到容器中
+/*
+    @ConfigurationProperties 作用：
+    将配置文件中配置的每一个属性的值，映射到这个组件中；
+    告诉SpringBoot将本类中的所有属性和配置文件中相关的配置进行绑定
+    参数 prefix = “person” : 将配置文件中的person下面的所有属性一一对应
+*/
+@ConfigurationProperties(value = "person")
+@Validated         //JSR303数据校验
+public class Person implements Serializable {
+
+    private String id;
+    private String name;
+    private String gender;
+    private int age;
+    private List<String> allPets;
+    private Set<String> set;
+    private List<String> list;
+    private String[] stringArr;
+    private Map<String,Object> map;
+    private Date date;
+    private boolean status;
+
+    @Email(message = "邮箱格式错误！")
+    @NotNull
+    private String email;
+
+}
+
+public class Pet implements Serializable{
+    private String id;
+    private String name;
+}
+
+```
+
+```yml
+person:
+  id: s001${random.uuid}
+  name: Jack
+  gender: male
+  age: 24
+  allPets:
+    - dog
+    - pig
+    - cat
+  set:
+    - a
+    - b
+    - c
+    - c
+    - b
+  list:
+    - 1
+    - 2
+    - 3
+    - -4
+  stringArr:
+    - banana
+    - apple
+    - orange
+  map: {k1: v1,k2: v2}
+  date: 2020/09/19
+  status: false
+  email: ayinjun1109@163.com
+```
+
+
+
+## 6、配置绑定
+
+### 1.1 引导加载配置类
+
+```java
+@SpringBootApplication
+
+↓↓↓↓
+    
+@SpringBootConfiguration
+@EnableAutoConfiguration
+@ComponentScan(excludeFilters = { @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
+		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
+public @interface SpringBootApplication {}
+
+```
+
+#### (1) SpringBootConfiguration
+
+其内部就是一个@Configuration，表明是一个配置类
+
+#### (2) @ComponentScan
+
+指明扫描哪些包
+
+#### (3) @EnableAutoConfiguration
+
+```java
+@AutoConfigurationPackage
+@Import(AutoConfigurationImportSelector.class)
+public @interface EnableAutoConfiguration {}
+```
+
+##### a. @AutoConfigurationPackage
+
+```java
+@Import(AutoConfigurationPackages.Registrar.class)
+public @interface AutoConfigurationPackage {}
+
+// 通过@Import给容器中导入了一个组件。（通过一个Registrar.calss批量注册）
+// 就是将指定包下的所有组件导入到容器中。Main程序所在的包下:com.ityj.boot
+```
+
+![image-20220409184403270](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220409184403270.png)
+
+##### b. @Import(AutoConfigurationImportSelector.class)
+
+```java
+1. AutoConfigurationImportSelector.selectImports中的getAutoConfigurationEntry(annotationMetadata)批量获取所有的组件
+2. List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
+3. 最终通过工厂架子啊loadSpringFactories(classLoaderToUse)得到所有组件
+4. Enumeration<URL> urls = classLoader.getResources("META-INF/spring.factories");
+默认扫描我们系统中所有目录下的META-INF\spring.factories
+主要是spring-boot-autoconfigure-2.6.6.jar!\META-INF\spring.factories下org.springframework.boot.autoconfigure.EnableAutoConfiguration属性，其中2.6.6有134个，在程序中又引入了@EnableKnife4j，所以一共有加载了135个组件配置类
+```
+
+![image-20220409191717912](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220409191717912.png)
+
+![image-20220409192151919](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220409192151919.png)
+
+
+
+### 1.2 按需加载配置项
+
+```xml
+虽然我们133个默认场景的自动配置项启动的时候全部加载。
+最终是按照条件装配规则@Conditional，按需装配的。
+```
+
+可以通过几个案例来查看最终效果：
+
+1. AopAutoConfiguration是进行注册并使用的了。可以通过run.getBean(AopAutoConfiguration.class);进行确认
+
+   ```java
+   @Configuration(proxyBeanMethods = false)
+   @ConditionalOnProperty(prefix = "spring.aop", name = "auto", havingValue = "true", matchIfMissing = true)
+   // 表示如果配置了spring.aop.auto=true, 会进行注册。如果没有配置也会注册。怎样都会注册
+   public class AopAutoConfiguration {}
+   
+   里面的类org.springframework.boot.autoconfigure.aop.AopAutoConfiguration$ClassProxyingConfiguration也进行了注册。
+       @Configuration(proxyBeanMethods = false)
+       @ConditionalOnMissingClass("org.aspectj.weaver.Advice")  // 如果没有引入Advice这个类，确实没有导入这个包
+       @ConditionalOnProperty(prefix = "spring.aop", name = "proxy-target-class", havingValue = "true",
+                              matchIfMissing = true)  // 怎样都满足
+       static class ClassProxyingConfiguration {}     // 所以也进行了注册。
+   
+       
+   ```
+
+2. CacheAutoConfiguration没有生效
+
+   ```java
+   @Configuration(proxyBeanMethods = false)
+   @ConditionalOnClass(CacheManager.class)
+   @ConditionalOnBean(CacheAspectSupport.class)   // 不满足条件，所以CacheAutoConfiguration没有注册
+   @ConditionalOnMissingBean(value = CacheManager.class, name = "cacheResolver")
+   @EnableConfigurationProperties(CacheProperties.class)
+   @AutoConfigureAfter({ CouchbaseDataAutoConfiguration.class, HazelcastAutoConfiguration.class,
+   		HibernateJpaAutoConfiguration.class, RedisAutoConfiguration.class })
+   @Import({ CacheConfigurationImportSelector.class, CacheManagerEntityManagerFactoryDependsOnPostProcessor.class })
+   public class CacheAutoConfiguration {}
+   ```
+
+3. DispatcherServletAutoConfiguration生效的
+
+1 DispatcherServletAutoConfiguration
+
+```java
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnWebApplication(type = Type.SERVLET)
+@ConditionalOnClass(DispatcherServlet.class)
+@AutoConfigureAfter(ServletWebServerFactoryAutoConfiguration.class)
+public class DispatcherServletAutoConfiguration {}
+```
+
+1.1 内部类DispatcherServletConfiguration
+
+```java
+@Configuration(proxyBeanMethods = false)
+@Conditional(DefaultDispatcherServletCondition.class)   // 当满足这个类里面代码逻辑给定的条件时，为true
+@ConditionalOnClass(ServletRegistration.class)			// 有这个类时
+@EnableConfigurationProperties(WebMvcProperties.class)	
+// 1.开启WebMvcProperties这个类和对应配置文件spring.mvc的配置绑定功能;配置文件里的所有spring.mvc.xxx都会被WebMvcProperties封装。
+// 2. 把WebMvcProperties放到容器中
+protected static class DispatcherServletConfiguration {}
+```
+
+1.1.1方法dispatcherServlet
+
+```java
+@Bean(name = "dispatcherServlet")
+public DispatcherServlet dispatcherServlet(WebMvcProperties webMvcProperties) {  // 这个webMvcProperties是从容器中拿的。webMvcProperties又是通过@EnableConfigurationProperties(WebMvcProperties.class)注入到容器中的
+   DispatcherServlet dispatcherServlet = new DispatcherServlet();
+   dispatcherServlet.setDispatchOptionsRequest(webMvcProperties.isDispatchOptionsRequest());
+   dispatcherServlet.setDispatchTraceRequest(webMvcProperties.isDispatchTraceRequest());
+   dispatcherServlet.setThrowExceptionIfNoHandlerFound(webMvcProperties.isThrowExceptionIfNoHandlerFound());
+   dispatcherServlet.setPublishEvents(webMvcProperties.isPublishRequestHandledEvents());
+   dispatcherServlet.setEnableLoggingRequestDetails(webMvcProperties.isLogRequestDetails());
+   return dispatcherServlet;
+}
+```
+
+1.1.2方法multipartResolver，文件上传解析器
+
+```java
+@Bean
+@ConditionalOnBean(MultipartResolver.class)   // 容器中有了MultipartResolver类型的bean
+@ConditionalOnMissingBean(name = "multipartResolver")  // 容器中没有multipartResolver名字的bean
+public MultipartResolver multipartResolver(MultipartResolver resolver) {  
+   // MultipartResolver resolver这个对象作为参数传入到@Bean标注的配置里，则resolver这个值就是从容器中获取。
+   // 直接将容器中MultipartResolver类型的bean返回，这个名字设置为multipartResolver，防止用户配置的文件上传解析器不符合规范。（名字必须是multipartResolver）
+   return resolver;
+}
+```
+
+4. HttpEncodingAutoConfiguration
+
+目前发现SpringBoot前后端交互没有出现中文乱码现象，主要是自动配置了HttpEncodingAutoConfiguration.characterEncodingFilter
+
+```java
+@Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(ServerProperties.class)
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+@ConditionalOnClass(CharacterEncodingFilter.class)
+@ConditionalOnProperty(prefix = "server.servlet.encoding", value = "enabled", matchIfMissing = true)
+public class HttpEncodingAutoConfiguration {}
+```
+
+```java
+private final Encoding properties;
+
+public HttpEncodingAutoConfiguration(ServerProperties properties) {
+   this.properties = properties.getServlet().getEncoding();
+}
+```
+
+```java
+@Bean
+@ConditionalOnMissingBean
+public CharacterEncodingFilter characterEncodingFilter() {
+   CharacterEncodingFilter filter = new OrderedCharacterEncodingFilter();
+   filter.setEncoding(this.properties.getCharset().name());
+   filter.setForceRequestEncoding(this.properties.shouldForce(Encoding.Type.REQUEST));
+   filter.setForceResponseEncoding(this.properties.shouldForce(Encoding.Type.RESPONSE));
+   return filter;
+}
+```
+
+==总结：==
+
+* SpringBoot首先加载所有的自动配置类XxxAutoConfiguration
+* 每个自动配置类按照条件(conditional)判断是否生效，默认都会绑定配置文件指定的值.XxxProperties.class里面。XxxProperties和配置文件中的属性又是一一对应的。
+* 生效的配置类就会给容器汇总装配非常多的组件。
+* 只要容器中有这些组件，就相当于有了这些功能。
+* 定制化配置
+  * 用户直接自己@Bean替换底层的组件
+  * 用户去看这个组件对应的配置文件，通过yml进行修改
+
+XxxAutoConfiguration  --> 组件   ->  去XxxProperties的Bean中进行取值   --> 可通过application.yml进行修改
+
+
+
+
+
+```shell
+生效
+开启 
+```
+
+
+
+
+
+
+
+
+
+# 二、配置文件
+
+## 1、配置文件
+
+Spring Boot使用一个全局的配置文件，其配置文件名是固定的。
+
+* application.properties
+* application.yml
+
+配置文件的作用：修改Spring Boot自动配置的默认值。
+
+标记语言：
+
+​	以前的配置文件，大多是使用xxx.xml的方式，比较繁琐。
+
+XML：
+
+```xml
+<server>
+	<port>9090</port>
+</server>
+```
+
+
+
+​    YMAL是以数据为中心，比json、xml等更加适合做配置文件。
+
+​	eg：
+
+```yml
+server:
+  port: 9090
+```
+
+
+
+## 2、YMAL语法
+
+### 1.基本语法
+
+k: (空格)v：表示一对键值对（空格必须有）
+
+以空格的缩进来控制层级关系，只要是左对齐的一列数据，都是一个层级的。
+
+```yml
+server:
+  port: 9090
+  servlet:
+    context-path: /sb
+```
+
+属性跟值大小写敏感
+
+### 2.值的写法
+
+（1）字面量： 普通的值（数字，字符串，布尔值）
+
+k: v   字面量直接来写。
+
+字符串默认不需要加双引号。
+
+如果加了需要跟单引号做好区分：
+
+双引号：写的如果是换行(\n)类的字符，最终会进行换行输出。
+
+单引号：写的如果是换行(\n)类的字符，最终会把输入的值原封不动输出。
+
+（2）对象，Map（属性和值）（键值对）
+
+```yml
+friend: 
+	lastName: san
+	age: 20
+```
+
+行内写法：`friend: {lastName: san,age: 20}`
+
+（3）数组（List、Set）
+
+用 - 值来表示数组中的一个元素
+
+```yml
+pets: 
+	- cat
+	- pig
+	- dog
+```
+
+行内写法：`pets: [cat, pig, dog]`
+
+
+
+### 3.Profile 文件
+
+（1）通过yml文件的spring:  profiles:  active:   指明
+
+```yml
+server:
+  port: 9090
+  servlet:
+    context-path: /sb
+spring:
+  profiles:
+    active: prd
+
+
+
+---
+server:
+  port: 8888
+spring:
+  profiles: dat
+
+---
+
+server:
+  port: 9999
+spring:
+  profiles: prd
+```
+
+（2）通过application-{profile}.properties实现动态切换。
+
+application.properties
+
+```properties
+server.port=7777
+# 如果没有指定spring.profiles.active，默认是application.properties对应的值
+spring.profiles.active=prd
+```
+
+application-dev.properties
+
+```properties
+server.port=6666
+```
+
+application-prd.properties
+
+```properties
+server.port=5555
+```
+
+​    （3）使用命令行，启动jar包，指定对应的配置文件
+
+```shell
+java -jar springboot-review1214-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+```
+
+​	（4）也可以使用`spring.config.location`指定文件位置
+
+```
+java -jar springboot-review1214-0.0.1-SNAPSHOT.jar --spring.config.location=./application.yml
+最后指定的端口号是外部location的端口：优先，并且和其他内部配置文件互补。
+---------------------------------------------------------
+springboot-review1214-0.0.1-SNAPSHOT.jar和外部配置文件application.yml所在同一个文件夹下，其实直接
+`java -jar springboot-review1214-0.0.1-SNAPSHOT.jar`就会默认先读取外部的端口为1111的application.yml配置文件。
+```
+
+### 4、SpringBoot默认日志（slf4j --> logback）
+
+如果想要使用，直接引入logback.xml或者logback-spring.xml即可。
+
+* SpringBoot如何整合使用更加优秀的log4j2的日志框架呢？
+
+（1）排除spring的spring-boot-starter-logging框架，再引入spring-boot-starter-log4j2依赖
+
+```xml
+<!--要想使用log4j2的日志框架，需要排除掉原始的-->
+<exclusions>
+    <exclusion>
+        <artifactId>spring-boot-starter-logging</artifactId>
+        <groupId>org.springframework.boot</groupId>
+    </exclusion>
+</exclusions>
+<dependency> <!-- 引入log4j2依赖 -->
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-log4j2</artifactId>
+</dependency>
+```
+
+==logback-demo==
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+    <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
+    <property name="LOG_HOME" value="C:home" />
+
+    <!-- 控制台输出 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 按照每天生成日志文件 + 单个文件大小为10M  +  保留7天 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <FileNamePattern>${LOG_HOME}/spring-logback-druid.log.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <!--日志文件保留天数-->
+            <MaxHistory>7</MaxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+        <!--日志文件最大的大小-->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>10MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <!-- 日志输出级别 -->
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
+```
+
+==log4j2.xml==
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <!--全局参数-->
+    <Properties>
+        <Property name="pattern">%d{yyyy-MM-dd HH:mm:ss,SSS} %5p %c{1}:%L - %m%n</Property>
+        <Property name="logDir">/data/logs/dust-server</Property>
+    </Properties>
+
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="rolling_file"/>
+        </Root>
+    </Loggers>
+
+    <Appenders>
+        <!-- 定义输出到控制台 -->
+        <Console name="console" target="SYSTEM_OUT" follow="true">
+            <!--控制台只输出level及以上级别的信息-->
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout>
+                <Pattern>${pattern}</Pattern>
+            </PatternLayout>
+        </Console>
+        <!-- 同一来源的Appender可以定义多个RollingFile，定义按天存储日志 -->
+        <RollingFile name="rolling_file"
+                     fileName="${logDir}/dust-server.log"
+                     filePattern="${logDir}/dust-server_%d{yyyy-MM-dd}.log">
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout>
+                <Pattern>${pattern}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <!-- 日志保留策略，配置只保留七天 -->
+            <DefaultRolloverStrategy>
+                <Delete basePath="${logDir}/" maxDepth="1">
+                    <IfFileName glob="dust-server_*.log" />
+                    <IfLastModified age="7d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+</Configuration>
+
+```
+
+
+
+
+
+<details>
+    <summary>==log4j2.xml==</summary>
+    dsfsdfs
+</details>
+
+
+
+
+
