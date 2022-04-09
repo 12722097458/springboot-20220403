@@ -44,6 +44,9 @@ public class BootApplication {
 		boolean bean1 = run.containsBean("xml-pet");
 		System.out.println("通过XML配置的xml-pet组件是否存在 = " + bean1);
 
+		int beanDefinitionCount = run.getBeanDefinitionCount();
+		System.out.println("共加载beanDefinitionCount = " + beanDefinitionCount);
+
 	}
 
 }
