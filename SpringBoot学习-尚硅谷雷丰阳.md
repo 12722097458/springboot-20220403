@@ -227,7 +227,9 @@ spring-boot-dependencies这个项目里有一个properties的标签，里面定�
 
 ### 1.3 配置绑定
 
-####  （1）@ConfigurationProperties
+####  @ConfigurationProperties
+
+(1) ConfigurationProperties + Component将自己类Person和配置文件中的属性绑定在一起，并注入到容器中
 
 ```java
 @Data
@@ -298,6 +300,23 @@ person:
   date: 2020/09/19
   status: false
   email: ayinjun1109@163.com
+```
+
+（2）通过一个配置类开启配置绑定
+
+```java
+@EnableConfigurationProperties(Car.class)  // 第二种注入容器中的方式（ConfigurationProperties）
+// 作用 1: 开启Car配置绑定功能  2: 把Car组件自动注入到容器中
+public class MyConfig {}
+```
+
+```java
+@Data
+@ConfigurationProperties(prefix = "mycar")
+public class Car {
+    private String brand;
+    private double price;
+}
 ```
 
 
