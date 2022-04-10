@@ -9,3 +9,8 @@ knife4j:
   enable: true    # http://localhost:8080/doc.html
   setting:
     language: en-US
+
+
+mycar:
+  price: 8888
+  brand: BYD

@@ -1,8 +1,10 @@
 package com.ityj.boot.config;
 
 import com.github.xiaoymin.knife4j.core.io.ResourceUtil;
+import com.ityj.boot.entity.Car;
 import com.ityj.boot.entity.Pet;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -23,6 +25,8 @@ import org.springframework.context.annotation.ImportResource;
 @ImportResource("classpath:bean-pet.xml")
 @Import({Pet.class, ResourceUtil.class})
 @Configuration   // 告诉SpringBoot这是一个配置类 == 配置文件的作用
+@EnableConfigurationProperties(Car.class)  // 第二种注入容器中的方式（ConfigurationProperties）
+// 作用 1: 开启Car配置绑定功能  2: 把Car组件自动注入到容器中
 public class MyConfig {
 
     // 默认单实例
