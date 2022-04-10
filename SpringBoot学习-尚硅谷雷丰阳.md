@@ -10,7 +10,8 @@
 >
 > 是简化Spring技术栈的快速开发脚手架。
 
-
+生效
+开启 
 
 ## 2、Spring Boot入门案例
 
@@ -18,11 +19,11 @@
 
 官网指引：https://spring.io/guides/gs/spring-boot/
 
-### 1.新建一个普通的maven项目
+### （1）新建一个普通的maven项目
 
 ![image-20201214213246257](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20201214213246257.png)
 
-### 2.导入父项目依赖以及配置
+### （2）导入父项目依赖以及配置
 
 ```xml
 <modelVersion>4.0.0</modelVersion>
@@ -49,7 +50,7 @@
 </plugin>
 ```
 
-### 3.创建一个启动类，进行配置
+### （3）创建一个启动类，进行配置
 
 ==注意文件的位置：保证它在controller、mapper包的同级==
 
@@ -62,7 +63,7 @@ public class QuickStartApplication {
 }
 ```
 
-### 4.创建一个HelloController
+### （4）创建一个HelloController
 
 ```java
 @Controller
@@ -78,7 +79,7 @@ public class HelloController {
 }
 ```
 
-### 5.启动项目，进行测试
+### （5）启动项目，进行测试
 
 > 运行QuickStartApplication的main方法，成功启动后访问url：http://localhost:8080/hello
 
@@ -96,7 +97,7 @@ public class HelloController {
 
 ## 4、SpringBoot的特点：
 
-### 1.1依赖管理
+### 1.1 依赖管理
 
 * 父项目的依赖管理
 
@@ -291,7 +292,7 @@ person:
     - 1
     - 2
     - 3
-    - -4
+    - 4
   stringArr:
     - banana
     - apple
@@ -524,24 +525,74 @@ XxxAutoConfiguration  --> 组件   ->  去XxxProperties的Bean中进行取值   
 
 
 
+## 7、最佳实战
+
+### 1.1 引入场景依赖
+
+* Spring官方的：https://docs.spring.io/spring-boot/docs/current/reference/html/using.html#using.build-systems.starters
+* 第三方的：http://www.mybatis.cn/archives/861.html
+
+### 1.2 查看自动配置了哪些（选做）
+
+* 自己分析：根据XxxAutoConfiguration类上以及方法上的注解分析是否生效
+* 配置文件中debug=true开启自动配置报告，可以看到positive/negative的组件，以及满足与否的原因
+
+### 1.3 配置是否需要修改
+
+* 参考文档修改配置项
+
+  https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html#appendix.application-properties
+
+* 自己根据XxxProperties的属性进行分析
+
+* 自定义加入或修改配置型:@Bean...
+
+* 自定义器: XxxCustomizer
+
+* ......
 
 
-```shell
-生效
-开启 
+
+## 8、开发小技巧
+
+### 1.1 Lombok
+
+> 在IDE中下载lombok插件再引入依赖即可，springboot已经对版本进行了控制
+
+```xml
+<dependency>
+   <groupId>org.projectlombok</groupId>
+   <artifactId>lombok</artifactId>
+</dependency>
 ```
 
+### 1.2 devtools
+
+修改代码后，IDE手动编译一次，会进行重启。Automatic Restart
+
+> https://docs.spring.io/spring-boot/docs/current/reference/html/using.html#using.devtools
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-devtools</artifactId>
+   <optional>true</optional>
+</dependency>
+```
+
+### 1.3 Spring Initializr
+
+> https://start.spring.io/
 
 
 
 
 
-
-
-
-# 二、配置文件
+# 二、Spring Boot2 核心技术
 
 ## 1、配置文件
+
+### 1.1 配置文件
 
 Spring Boot使用一个全局的配置文件，其配置文件名是固定的。
 
@@ -575,9 +626,9 @@ server:
 
 
 
-## 2、YMAL语法
+### 1.2 YMAL语法
 
-### 1.基本语法
+#### （1）基本语法
 
 k: (空格)v：表示一对键值对（空格必须有）
 
@@ -592,7 +643,7 @@ server:
 
 属性跟值大小写敏感
 
-### 2.值的写法
+#### （2）值的写法
 
 （1）字面量： 普通的值（数字，字符串，布尔值）
 
@@ -631,7 +682,26 @@ pets:
 
 
 
-### 3.Profile 文件
+如果想要通过@Value获取到数组或集合，可以这样写(逗号隔开)：
+
+```yml
+data:
+  list: Jack,Rose,Tom
+```
+
+```java
+@Value("${data.list}")
+private List<String> list;  // Spring默认情况下会以','进行分割，转换成对应的数组或List。
+@Value("${data.list}")
+private String[] arr;
+
+@Value("#{'${data.list}'.split(',')}")   // 数组或list接收都可以
+private List<String> list2;
+@Value("#{'${data.list}'.split(',')}")
+private String[] arr2;
+```
+
+### 1.3 Profile 文件
 
 （1）通过yml文件的spring:  profiles:  active:   指明
 
@@ -698,7 +768,7 @@ springboot-review1214-0.0.1-SNAPSHOT.jar和外部配置文件application.yml所�
 `java -jar springboot-review1214-0.0.1-SNAPSHOT.jar`就会默认先读取外部的端口为1111的application.yml配置文件。
 ```
 
-### 4、SpringBoot默认日志（slf4j --> logback）
+### 1.4 SpringBoot默认日志（slf4j --> logback）
 
 如果想要使用，直接引入logback.xml或者logback-spring.xml即可。
 
@@ -815,14 +885,51 @@ springboot-review1214-0.0.1-SNAPSHOT.jar和外部配置文件application.yml所�
 
 
 
+## 2、Web开发
 
+### 1.1 简单功能分析
 
-<details>
-    <summary>==log4j2.xml==</summary>
-    dsfsdfs
-</details>
+#### （1）静态资源访问
 
+> https://docs.spring.io/spring-boot/docs/current/reference/html/web.html#web.servlet.spring-mvc.static-content
 
+* **静态资源默认路径**
 
+By default, Spring Boot serves static content from a directory called `/static` (or `/public` or `/resources` or `/META-INF/resources`) in the classpath.
 
+只要静态资源放在上面四个目录下，可以直接访问：项目根目录/ + 资源名称（http://localhost:8080/img1.jpg）
+
+* **静态资源访问前缀：默认没有**
+
+By default, resources are mapped on `/**`, but you can tune that with the `spring.mvc.static-path-pattern` property. For instance, relocating all resources to `/res/**` can be achieved as follows:
+
+```yml
+spring:
+  mvc:
+    static-path-pattern: /res/**
+```
+
+http://localhost:8080/res/img1.jpg才能正常访问。
+
+* **修改资源默认文件夹**
+
+  ```yml
+  spring:
+    web:
+      resources:
+        static-locations: classpath:/aa/   # 修改默认静态资源的文件夹
+  ```
+
+#### （2）欢迎页支持
+
+* 静态资源下添加index.html
+  * 如果自定义了静态资源路径和访问前缀，可能会出问题。访问前缀不能开启
+  * 静态资源路径可以开启。
+* controller能处理/index请求
+
+#### （3）自定义Favicon
+
+> 只要在静态目录下放入一个favicon.ico图片即可
+>
+> static-path-pattern也会导致favicon失效。
 
