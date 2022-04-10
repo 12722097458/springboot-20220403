@@ -5,6 +5,10 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
+#    static-path-pattern: /res/**            # 会导致welcome page失效
+  web:
+    resources:
+      static-locations: classpath:/aa/   # 修改默认静态资源的文件夹
 knife4j:
   enable: true    # http://localhost:8080/doc.html
   setting:
