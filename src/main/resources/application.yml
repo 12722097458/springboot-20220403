@@ -15,3 +15,9 @@ mycar:
   brand: BYD
 
 debug: false
+
+data:
+  str: 字符串
+  number: 233.22
+  boolean: false
+  list: Jack,Rose,Tom
