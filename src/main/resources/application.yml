@@ -10,7 +10,8 @@ knife4j:
   setting:
     language: en-US
 
-
 mycar:
   price: 8888
   brand: BYD
+
+debug: false
