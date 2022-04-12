@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @Slf4j
@@ -43,7 +44,8 @@ public class HelloController {
     }
 
     @GetMapping(path = "/data")
-    public String getData() {
+    public String getData() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(30);
         log.info("str = {}", str);
         log.info("num = {}", num);
         log.info("flag = {}", flag);
