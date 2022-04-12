@@ -4,8 +4,7 @@ import com.ityj.boot.entity.Car;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,4 +52,26 @@ public class HelloController {
         log.info("arr = {}", Arrays.toString(arr));
         return "Success";
     }
+
+    @GetMapping(path = "/user")
+    public String getMethod() {
+        return "GET";
+    }
+    @PostMapping(path = "/user")
+    public String postMethod() {
+        return "POST";
+    }
+    @PutMapping(path = "/user")
+    public String putMethod() {
+        return "PUT";
+    }
+    @DeleteMapping(path = "/user")
+    public String deleteMethod() {
+        return "DELETE";
+    }
+    @PatchMapping(path = "/user")
+    public String patchMethod() {
+        return "PATCH";
+    }
+
 }

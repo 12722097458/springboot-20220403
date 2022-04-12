@@ -8,5 +8,29 @@
 
 <h2>Hello Index!</h2>
 
+测试页面REST请求：
+<form action="/user" method="get">
+    <input value="GET请求" type="submit"/>
+</form>
+
+<form action="/user" method="post">
+    <input value="POST请求" type="submit"/>
+</form>
+
+<form action="/user" method="post">
+    <input hidden="hidden" name="_hide_method" value="put"/>
+    <input value="PUT请求" type="submit">
+</form>
+
+<form action="/user" method="post">
+    <input hidden="hidden" name="_hide_method" value="delete"/>
+    <input value="DELETE请求" type="submit">
+</form>
+
+<form action="/user" method="post">
+    <input hidden="hidden" name="_hide_method" value="patch"/>
+    <input value="PATCH请求" type="submit">
+</form>
+
 </body>
 </html>

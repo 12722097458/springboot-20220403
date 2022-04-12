@@ -6,6 +6,10 @@ spring:
   web:
     resources:
       static-locations: classpath:/aa/   # 修改默认静态资源的文件夹
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
 knife4j:
   enable: true    # http://localhost:8080/doc.html
   setting:
