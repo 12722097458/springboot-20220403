@@ -1010,4 +1010,128 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
   }
   ```
 
-  ​	
+
+
+
+
+
+### 1.2 请求参数处理
+
+#### （1）请求映射
+
+> 前端form表单实现PUT/DELETE/PATCH请求
+
+```java
+@GetMapping(path = "/user")
+public String getMethod() {
+    return "GET";
+}
+@PostMapping(path = "/user")
+public String postMethod() {
+    return "POST";
+}
+@PutMapping(path = "/user")
+public String putMethod() {
+    return "PUT";
+}
+@DeleteMapping(path = "/user")
+public String deleteMethod() {
+    return "DELETE";
+}
+@PatchMapping(path = "/user")
+public String patchMethod() {
+    return "PATCH";
+}
+```
+
+```html
+测试页面REST请求：
+<form action="/user" method="get">
+    <input value="GET请求" type="submit"/>
+</form>
+
+<form action="/user" method="post">
+    <input value="POST请求" type="submit"/>
+</form>
+
+<form action="/user" method="post">
+    <input hidden="hidden" name="_method" value="put"/>
+    <input value="PUT请求" type="submit">
+</form>
+
+<form action="/user" method="post">
+    <input hidden="hidden" name="_method" value="delete"/>
+    <input value="DELETE请求" type="submit">
+</form>
+
+<form action="/user" method="post">
+    <input hidden="hidden" name="_method" value="patch"/>
+    <input value="PATCH请求" type="submit">
+</form>
+```
+
+```yml
+spring:  
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+```
+
+form表单默认只支持GET和POST请求，若想要发送PUT请求，需要通过过滤器将request的method进行重新设置来实现。
+
+SpringBoot中的OrderedHiddenHttpMethodFilter就可以实现这个功能。
+
+```java
+@Bean
+@ConditionalOnMissingBean(HiddenHttpMethodFilter.class)
+@ConditionalOnProperty(prefix = "spring.mvc.hiddenmethod.filter", name = "enabled", matchIfMissing = false)
+public OrderedHiddenHttpMethodFilter hiddenHttpMethodFilter() {
+   return new OrderedHiddenHttpMethodFilter();
+}
+```
+
+默认这个配置不会加载，只有添加了spring.mvc.hiddenmethod.filter.enable=true才能注册。
+
+其最终的实现原理是HiddenHttpMethodFilter
+
+```java
+@Override
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws ServletException, IOException {
+
+   HttpServletRequest requestToUse = request;
+
+   if ("POST".equals(request.getMethod()) && request.getAttribute(WebUtils.ERROR_EXCEPTION_ATTRIBUTE) == null) {
+      String paramValue = request.getParameter(this.methodParam);
+      if (StringUtils.hasLength(paramValue)) {
+         String method = paramValue.toUpperCase(Locale.ENGLISH);
+         if (ALLOWED_METHODS.contains(method)) {
+            requestToUse = new HttpMethodRequestWrapper(request, method);
+         }
+      }
+   }
+
+   filterChain.doFilter(requestToUse, response);
+}
+```
+
+* 默认的this.methodParam=_method， 提供了set方法，可以修改
+
+  * ```java
+    @Bean
+    public OrderedHiddenHttpMethodFilter hiddenHttpMethodFilter() {
+        OrderedHiddenHttpMethodFilter orderedHiddenHttpMethodFilter = new OrderedHiddenHttpMethodFilter();
+        orderedHiddenHttpMethodFilter.setMethodParam("_hide_method");
+        return orderedHiddenHttpMethodFilter;
+    }
+    ```
+
+* ALLOWED_METHODS=[PUT,DELETE,PATCH]，仅支持这三种请求
+
+* 原请求必须是POST类型
+
+* new HttpMethodRequestWrapper(request, method) 实现将_method=xx的请求设置进原始request, 达到xx请求效果
+
+==当时用客户端工具如POSTMAN时，不会走这个过滤，因为过来的请求直接就是PUT或者其他的类型了==
+
