@@ -1,15 +1,11 @@
 server:
   port: 8080
-  shutdown: GRACEFUL
 
 spring:
 #    static-path-pattern: /res/**            # 会导致welcome page失效
   web:
     resources:
       static-locations: classpath:/aa/   # 修改默认静态资源的文件夹
-  # 最大等待时间
-  lifecycle:
-    timeout-per-shutdown-phase: 30s
 knife4j:
   enable: true    # http://localhost:8080/doc.html
   setting:
@@ -26,12 +22,3 @@ data:
   number: 233.22
   boolean: false
   list: Jack,Rose,Tom
-
-management:
-  endpoint:
-    shutdown:
-      enabled: true
-  endpoints:
-    web:
-      exposure:
-        include: shutdown
