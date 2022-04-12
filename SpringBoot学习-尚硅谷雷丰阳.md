@@ -933,3 +933,81 @@ http://localhost:8080/res/img1.jpg才能正常访问。
 >
 > static-path-pattern也会导致favicon失效。
 
+#### （4）静态资源原理 - 源码解析
+
+MVC相关功能的自动配置类最终来自WebMvcAutoConfiguration
+
+通过分析注解，可以看到WebMvcAutoConfiguration是处于开启状态。
+
+关于资源映射，最终来到了内部类WebMvcAutoConfigurationAdapter，这里有一个带参的内部类，这里的参数都是来自于容器。
+
+```java
+public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcProperties mvcProperties,
+      ListableBeanFactory beanFactory, ObjectProvider<HttpMessageConverters> messageConvertersProvider,
+      ObjectProvider<ResourceHandlerRegistrationCustomizer> resourceHandlerRegistrationCustomizerProvider,
+      ObjectProvider<DispatcherServletPath> dispatcherServletPath,
+      ObjectProvider<ServletRegistrationBean<?>> servletRegistrations) {
+   this.resourceProperties = webProperties.getResources();
+   this.mvcProperties = mvcProperties;
+   this.beanFactory = beanFactory;
+   this.messageConvertersProvider = messageConvertersProvider;
+   this.resourceHandlerRegistrationCustomizer = resourceHandlerRegistrationCustomizerProvider.getIfAvailable();
+   this.dispatcherServletPath = dispatcherServletPath;
+   this.servletRegistrations = servletRegistrations;
+   this.mvcProperties.checkConfiguration();
+}
+```
+
+* **静态资源映射源码**
+
+  * 可以看到访问/webjars/abc时，会自动映射到/META-INF/resources/webjars/abc
+  * StaticPathPattern和StaticLocations如果没有配置时，访问/**默认会映射到classpath:[/META-INF/resources/, /resources/, /static/, /public/].
+
+  ```java
+  @Override
+  public void addResourceHandlers(ResourceHandlerRegistry registry) {
+      if (!this.resourceProperties.isAddMappings()) {
+          logger.debug("Default resource handling disabled");
+          return;
+      }
+      addResourceHandler(registry, "/webjars/**", "classpath:/META-INF/resources/webjars/");
+      addResourceHandler(registry, this.mvcProperties.getStaticPathPattern(), (registration) -> {
+          registration.addResourceLocations(this.resourceProperties.getStaticLocations());
+          if (this.servletContext != null) {
+              ServletContextResource resource = new ServletContextResource(this.servletContext, SERVLET_LOCATION);
+              registration.addResourceLocations(resource);
+          }
+      });
+  }
+  ```
+
+* **欢迎页配置源码**
+
+  * 通过源码可以看出，welcomePage != null && "/**".equals(staticPathPattern)，也就是说staticPathPattern没有修改时，index页才会生效
+
+  ```java
+  @Bean
+  public WelcomePageHandlerMapping welcomePageHandlerMapping(ApplicationContext applicationContext,
+                                                             FormattingConversionService mvcConversionService, ResourceUrlProvider mvcResourceUrlProvider) {
+      WelcomePageHandlerMapping welcomePageHandlerMapping = new WelcomePageHandlerMapping(
+          new TemplateAvailabilityProviders(applicationContext), applicationContext, getWelcomePage(),
+          this.mvcProperties.getStaticPathPattern());
+      welcomePageHandlerMapping.setInterceptors(getInterceptors(mvcConversionService, mvcResourceUrlProvider));
+      welcomePageHandlerMapping.setCorsConfigurations(getCorsConfigurations());
+      return welcomePageHandlerMapping;
+  }
+  
+  WelcomePageHandlerMapping(TemplateAvailabilityProviders templateAvailabilityProviders,
+  			ApplicationContext applicationContext, Resource welcomePage, String staticPathPattern) {
+      if (welcomePage != null && "/**".equals(staticPathPattern)) {
+          logger.info("Adding welcome page: " + welcomePage);
+          setRootViewName("forward:index.html");
+      }
+      else if (welcomeTemplateExists(templateAvailabilityProviders, applicationContext)) {
+          logger.info("Adding welcome page template: index");
+          setRootViewName("index");
+      }
+  }
+  ```
+
+  ​	
