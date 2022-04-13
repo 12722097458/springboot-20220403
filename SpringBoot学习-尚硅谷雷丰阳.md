@@ -1019,6 +1019,10 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
 
 #### （1）请求映射
 
+##### （1.1）REST使用与原理
+
+==OrderedHiddenHttpMethodFilter==
+
 > 前端form表单实现PUT/DELETE/PATCH请求
 
 ```java
@@ -1135,3 +1139,58 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
 
 ==当时用客户端工具如POSTMAN时，不会走这个过滤，因为过来的请求直接就是PUT或者其他的类型了==
 
+
+
+##### （1.2）请求映射原理(DispatcherServlet)
+
+> 所有的请求都会走org.springframework.web.servlet.DispatcherServlet#doDispatch方法
+
+![image-20220413220001944](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413220001944.png)
+
+SpringMVC功能都从org.springframework.web.servlet.DispatcherServlet#doDispatch方法开始分析。
+
+==解析doDispatch()方法==
+
+```java
+// Determine handler for the current request.
+// 找到当前请求是使用哪个Handler(Controller的方法)处理
+mappedHandler = getHandler(processedRequest);
+
+```
+
+Handler是通过遍历HandlerMapping处理器映射中的值来判断并获取的
+
+![image-20220413221849239](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413221849239.png)
+
+
+
+可以看到访问的GET请求http://localhost:8080/user是在RequestMappingHandlerMapping中的
+
+![image-20220413222135849](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413222135849.png)
+
+mappingRegistory中有着请求以及对应的Handler方法具体映射。
+
+![image-20220413222120503](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413222120503.png)
+
+
+
+**所有的映射都是在HandlerMapping中：**
+
+* SpringBoot自动配置了欢迎页的WelcomePageHandlerMapping。访问/默认找静态资源目录下的index.html文件
+
+  ```java
+  // We need to care for the default handler directly, since we need to
+  // expose the PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE for it as well.
+  org.springframework.web.servlet.handler.AbstractUrlHandlerMapping#getHandlerInternal，这里的WelcomePageHandlerMapping最终将/映射到ParameterizableViewController，forward:index.html
+  Object rawHandler = null;
+  if (StringUtils.matchesCharacter(lookupPath, '/')) {
+      rawHandler = getRootHandler();
+  }
+  ```
+
+  ![image-20220413225730459](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413225730459.png)
+
+* SpringBoot自动配置了默认的RequestMappingHandlerMapping
+* 请求进来挨个尝试所有的HandlerMapping看是否有请求信息
+  * 如果有，就找到这个请求对应的Handler
+  * 如果没有，就从下一个HandlerMapping中找 
