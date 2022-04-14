@@ -1194,3 +1194,89 @@ mappingRegistory中有着请求以及对应的Handler方法具体映射。
 * 请求进来挨个尝试所有的HandlerMapping看是否有请求信息
   * 如果有，就找到这个请求对应的Handler
   * 如果没有，就从下一个HandlerMapping中找 
+
+
+
+#### （2）普通参数与基本注解
+
+* 注解
+
+  * **@PathVariable/@RequestParam/@RequestHeader/@CookieValue**
+
+  ```java
+  @GetMapping("/person/{id}/{name}")
+  public Map<String, Object> getRequest(@PathVariable("id") String id,
+                                        @PathVariable("name") String personName,
+                                        @PathVariable Map<String, Object> map,
+                                        @RequestParam("age") Integer age,
+                                        @RequestHeader("User-Agent") String userAgent,
+                                        @CookieValue("Idea-7e7a18c1") String cookieIde,
+                                        @CookieValue("Idea-7e7a18c1") Cookie cookie) {
+      Map<String, Object> result = new HashMap<>();
+      result.put("id", id);
+      result.put("personName", personName);
+      result.put("age", age);
+      result.put("userAgent", userAgent);
+      result.put("cookieIde", cookieIde);
+  
+      log.info("map = {}", map.toString());
+      log.info("cookie.key = {}; cookie.value = {}", cookie.getName(), cookie.getValue());
+  
+      return result;
+  }
+  ```
+
+  > test: http://localhost:8080/person/1/hello?age=21
+
+  
+
+  * **@RequestBody**
+
+  ```java
+  @PostMapping(path = "/saveUserInfo", produces = "application/json; charset=utf-8")
+  public Map<String, Object> saveUserInfo(@RequestBody String content) throws UnsupportedEncodingException {
+      Map<String, Object> result = new HashMap<>();
+      result.put("content", URLDecoder.decode(content, StandardCharsets.UTF_8));
+  
+      return result;
+  }
+  ```
+
+  ```html
+  <form action="/saveUserInfo" method="post">
+      <h2>测试@RequestBody获取数据</h2>
+      用户名：<input name="userName"/> <br/>
+      邮箱：<input name="email"/> <br/>
+      <input type="submit" value="提交">
+  </form>
+  ```
+
+  
+
+  * **@RequestAttribute**
+
+  ```java
+  @Controller
+  public class RequestController {
+  
+      @GetMapping("/goto")
+      public String gotoPage(HttpServletRequest request) {
+          request.setAttribute("msg", "信息");
+          return "forward:/success";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
+      }
+  
+      @GetMapping("/success")
+      @ResponseBody
+      public Map<String, Object> success(@RequestAttribute("msg") String message,
+                                         HttpServletRequest request) {
+          Map<String, Object> result = new HashMap<>();
+          result.put("anno_message", message);
+          result.put("request_message", request.getAttribute("msg"));
+          return result;
+      }
+  
+  }
+  ```
+
+  
+
