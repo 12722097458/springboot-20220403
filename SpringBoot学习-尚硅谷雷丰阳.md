@@ -1280,3 +1280,148 @@ mappingRegistory中有着请求以及对应的Handler方法具体映射。
 
   
 
+#### （3）请求参数处理原理
+
+* HandlerMapping中找到能处理请求的Handler（Controller.method()）
+
+![image-20220416184100611](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416184100611.png)
+
+* 为当前Handler找到一个适配器Adapter
+
+![image-20220416184236446](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416184236446.png)
+
+
+
+
+
+##### 1.1 HandlerAdapter
+
+> 根据请求的类型，确认对应的适配器Adapter
+
+ ![image-20220416184527041](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416184527041.png)
+
+0 - 支持方法上标注@RequestMapping
+
+1- 支持函数式编程
+
+...
+
+##### 1.2 执行目标方法
+
+> 根据Handler和Adapter执行目标方法
+
+```java
+// Actually invoke the handler.  DispatcherServlet.doDispatch()
+mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
+```
+
+```java
+// No synchronization on session demanded at all... 执行目标方法RequestMappingHandlerAdapter
+mav = invokeHandlerMethod(request, response, handlerMethod);
+invocableMethod.invokeAndHandle(webRequest, mavContainer);
+
+// ServletInvocableHandlerMethod  执行方法
+Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+
+// 获取方法参数值 InvocableHandlerMethod
+Object[] args = getMethodArgumentValues(request, mavContainer, providedArgs);
+
+```
+
+##### 1.3 参数解析器
+
+> 确定将要执行目标方法的每一个参数是什么。argumentResolvers
+
+SpringMVC目标方法能支持多少种参数类型，取决于参数解析器。
+
+![image-20220416191249903](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416191249903.png)
+
+参数解析器接口
+
+* 首先判断是否支持解析这种参数supportsParameter()
+* 支持的话执行resolveArgument()方法
+
+![image-20220416191815891](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416191815891.png)
+
+##### 1.4 返回值处理器
+
+![image-20220416192100478](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416192100478.png)
+
+##### 1.5 如何确定目标方法的每一个值
+
+> InvocableHandlerMethod，获取到所有参数及其对应的值
+
+```java
+protected Object[] getMethodArgumentValues(NativeWebRequest request, @Nullable ModelAndViewContainer mavContainer,
+      Object... providedArgs) throws Exception {
+
+   // 获取到参数的所有详细信息：参数标注的注解(以及name，isRequired等信息)，参数的类型，参数的名称等信息 
+   MethodParameter[] parameters = getMethodParameters();
+   if (ObjectUtils.isEmpty(parameters)) {
+      return EMPTY_ARGS;
+   }
+
+   Object[] args = new Object[parameters.length];
+   for (int i = 0; i < parameters.length; i++) {
+      MethodParameter parameter = parameters[i];
+      parameter.initParameterNameDiscovery(this.parameterNameDiscoverer);
+      args[i] = findProvidedArgument(parameter, providedArgs);
+      if (args[i] != null) {
+         continue;
+      }
+      // 判断解析器是否支持当前的参数类型
+      if (!this.resolvers.supportsParameter(parameter)) {
+         throw new IllegalStateException(formatArgumentError(parameter, "No suitable resolver"));
+      }
+      try {
+          // 真正的获取参数值方法
+         args[i] = this.resolvers.resolveArgument(parameter, mavContainer, request, this.dataBinderFactory);
+      }
+      catch (Exception ex) {
+         // Leave stack trace for later, exception may actually be resolved and handled...
+         if (logger.isDebugEnabled()) {
+            String exMsg = ex.getMessage();
+            if (exMsg != null && !exMsg.contains(parameter.getExecutable().toGenericString())) {
+               logger.debug(formatArgumentError(parameter, exMsg));
+            }
+         }
+         throw ex;
+      }
+   }
+   return args;
+}
+```
+
+
+
+###### 1.5.1 挨个判断哪个解析器执行这个参数类型
+
+```java
+@Override
+public boolean supportsParameter(MethodParameter parameter) {
+   return getArgumentResolver(parameter) != null;
+}
+
+@Nullable
+private HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parameter) {
+    HandlerMethodArgumentResolver result = this.argumentResolverCache.get(parameter);
+    if (result == null) {
+        for (HandlerMethodArgumentResolver resolver : this.argumentResolvers) {
+            if (resolver.supportsParameter(parameter)) {
+                result = resolver;
+                // 这里会将参数类型解析器resolver放入到缓存argumentResolverCache中。
+                // 所以项目启动后，同一个请求第一次执行会慢于后续的
+                this.argumentResolverCache.put(parameter, result);
+                break;
+            }
+        }
+    }
+    return result;
+}
+```
+
+###### 1.5.2 获取参数值
+
+```java
+return resolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory);
+```
