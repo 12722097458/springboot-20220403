@@ -1527,3 +1527,12 @@ private HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parame
 ```java
 return resolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory);
 ```
+
+
+
+
+
+```shell
+1. Servlet API: HttpServletRequest\n2. 复杂参数:Map,Model 最终放于请求域中。\n参数获取流程解析
+```
+
