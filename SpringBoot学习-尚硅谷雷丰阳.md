@@ -1019,7 +1019,7 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
 
 #### （1）请求映射
 
-##### （1.1）REST使用与原理
+##### 1.1 REST使用与原理
 
 ==OrderedHiddenHttpMethodFilter==
 
@@ -1141,7 +1141,7 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
 
 
 
-##### （1.2）请求映射原理(DispatcherServlet)
+##### 1.2 请求映射原理(DispatcherServlet)
 
 > 所有的请求都会走org.springframework.web.servlet.DispatcherServlet#doDispatch方法
 
@@ -1199,86 +1199,188 @@ mappingRegistory中有着请求以及对应的Handler方法具体映射。
 
 #### （2）普通参数与基本注解
 
-* 注解
+##### 1.1 注解
 
-  * **@PathVariable/@RequestParam/@RequestHeader/@CookieValue**
+* **@PathVariable/@RequestParam/@RequestHeader/@CookieValue**
 
-  ```java
-  @GetMapping("/person/{id}/{name}")
-  public Map<String, Object> getRequest(@PathVariable("id") String id,
-                                        @PathVariable("name") String personName,
-                                        @PathVariable Map<String, Object> map,
-                                        @RequestParam("age") Integer age,
-                                        @RequestHeader("User-Agent") String userAgent,
-                                        @CookieValue("Idea-7e7a18c1") String cookieIde,
-                                        @CookieValue("Idea-7e7a18c1") Cookie cookie) {
-      Map<String, Object> result = new HashMap<>();
-      result.put("id", id);
-      result.put("personName", personName);
-      result.put("age", age);
-      result.put("userAgent", userAgent);
-      result.put("cookieIde", cookieIde);
-  
-      log.info("map = {}", map.toString());
-      log.info("cookie.key = {}; cookie.value = {}", cookie.getName(), cookie.getValue());
-  
-      return result;
-  }
-  ```
+```java
+@GetMapping("/person/{id}/{name}")
+public Map<String, Object> getRequest(@PathVariable("id") String id,
+                                      @PathVariable("name") String personName,
+                                      @PathVariable Map<String, Object> map,
+                                      @RequestParam("age") Integer age,
+                                      @RequestHeader("User-Agent") String userAgent,
+                                      @CookieValue("Idea-7e7a18c1") String cookieIde,
+                                      @CookieValue("Idea-7e7a18c1") Cookie cookie) {
+    Map<String, Object> result = new HashMap<>();
+    result.put("id", id);
+    result.put("personName", personName);
+    result.put("age", age);
+    result.put("userAgent", userAgent);
+    result.put("cookieIde", cookieIde);
 
-  > test: http://localhost:8080/person/1/hello?age=21
+    log.info("map = {}", map.toString());
+    log.info("cookie.key = {}; cookie.value = {}", cookie.getName(), cookie.getValue());
 
-  
+    return result;
+}
+```
 
-  * **@RequestBody**
+> test: http://localhost:8080/person/1/hello?age=21
 
-  ```java
-  @PostMapping(path = "/saveUserInfo", produces = "application/json; charset=utf-8")
-  public Map<String, Object> saveUserInfo(@RequestBody String content) throws UnsupportedEncodingException {
-      Map<String, Object> result = new HashMap<>();
-      result.put("content", URLDecoder.decode(content, StandardCharsets.UTF_8));
-  
-      return result;
-  }
-  ```
 
-  ```html
-  <form action="/saveUserInfo" method="post">
-      <h2>测试@RequestBody获取数据</h2>
-      用户名：<input name="userName"/> <br/>
-      邮箱：<input name="email"/> <br/>
-      <input type="submit" value="提交">
-  </form>
-  ```
 
-  
+* **@RequestBody**
 
-  * **@RequestAttribute**
+```java
+@PostMapping(path = "/saveUserInfo", produces = "application/json; charset=utf-8")
+public Map<String, Object> saveUserInfo(@RequestBody String content) throws UnsupportedEncodingException {
+    Map<String, Object> result = new HashMap<>();
+    result.put("content", URLDecoder.decode(content, StandardCharsets.UTF_8));
 
-  ```java
-  @Controller
-  public class RequestController {
-  
-      @GetMapping("/goto")
-      public String gotoPage(HttpServletRequest request) {
-          request.setAttribute("msg", "信息");
-          return "forward:/success";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
+    return result;
+}
+```
+
+```html
+<form action="/saveUserInfo" method="post">
+    <h2>测试@RequestBody获取数据</h2>
+    用户名：<input name="userName"/> <br/>
+    邮箱：<input name="email"/> <br/>
+    <input type="submit" value="提交">
+</form>
+```
+
+
+
+* **@RequestAttribute**
+
+```java
+@Controller
+public class RequestController {
+
+    @GetMapping("/goto")
+    public String gotoPage(HttpServletRequest request) {
+        request.setAttribute("msg", "信息");
+        return "forward:/success";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
+    }
+
+    @GetMapping("/success")
+    @ResponseBody
+    public Map<String, Object> success(@RequestAttribute("msg") String message,
+                                       HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("anno_message", message);
+        result.put("request_message", request.getAttribute("msg"));
+        return result;
+    }
+
+}
+```
+
+
+
+##### 1.2 Servlet API
+
+```java
+WebRequest/ServletRequest...ZoneId
+```
+
+> 对于HttpServletRequest request这种参数，也是通过参数解析器来进行处理的。
+>
+> ServletRequest对应的是ServletRequestMethodArgumentResolver
+
+```java
+@GetMapping("/goto")
+public String gotoPage(HttpServletRequest request) {
+    request.setAttribute("msg", "信息");
+    return "forward:/success";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
+}
+```
+
+```java
+@Override
+public boolean supportsParameter(MethodParameter parameter) {
+   Class<?> paramType = parameter.getParameterType();
+   return (WebRequest.class.isAssignableFrom(paramType) ||
+         ServletRequest.class.isAssignableFrom(paramType) ||
+         MultipartRequest.class.isAssignableFrom(paramType) ||
+         HttpSession.class.isAssignableFrom(paramType) ||
+         (pushBuilder != null && pushBuilder.isAssignableFrom(paramType)) ||
+         (Principal.class.isAssignableFrom(paramType) && !parameter.hasParameterAnnotations()) ||
+         InputStream.class.isAssignableFrom(paramType) ||
+         Reader.class.isAssignableFrom(paramType) ||
+         HttpMethod.class == paramType ||
+         Locale.class == paramType ||
+         TimeZone.class == paramType ||
+         ZoneId.class == paramType);
+}
+```
+
+
+
+##### 1.3 复杂参数
+
+```java
+Map,Model,
+RedirectAttributes,ServletResponse,
+Errors/BindingResult,SessionStatus,UriComponentsBuilder,ServletUriComponentBuilder
+```
+
+==Map,Model里的参数最终会被放到request请求域中，使用map.put(x, v)相当于request.setAttribute(x, v)==
+
+```java
+@GetMapping("/params")
+public String params(Map<String, Object> map,
+                     Model model,
+                     RedirectAttributes attribute,
+                     HttpServletRequest request,
+                     HttpServletResponse response) {
+    map.put("map", "HelloMap");
+    model.addAttribute("model", "HelloModel");
+    attribute.addAttribute("redirectAttributes", "HelloRedirectAttributes");
+    request.setAttribute("request", "HelloRequest");
+    response.addCookie(new Cookie("k", "v-"));
+    return "forward:/success";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
+}
+
+@GetMapping("/success")
+@ResponseBody
+public Map<String, Object> success(@RequestAttribute(value = "msg", required = false) String message,
+                                   HttpServletRequest request) {
+    Map<String, Object> result = new HashMap<>();
+    result.put("anno_message", message);
+    result.put("request_message", request.getAttribute("msg"));
+    result.put("map", request.getAttribute("map"));
+    result.put("model", request.getAttribute("model"));
+    result.put("redirectAttributes", request.getAttribute("redirectAttributes"));
+    result.put("request", request.getAttribute("request"));
+    return result;
+}
+```
+
+
+
+是在doDispatch()的最后一步  --> processDispatchResult()   --> render(mv, request, response);进行视图渲染赋值
+
+![image-20220417193042987](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220417193042987.png)
+
+```java
+protected void exposeModelAsRequestAttributes(Map<String, Object> model,
+      HttpServletRequest request) throws Exception {
+
+   model.forEach((name, value) -> {
+      if (value != null) {
+         request.setAttribute(name, value);   // 将Map和Model中的值放入request请求域中
       }
-  
-      @GetMapping("/success")
-      @ResponseBody
-      public Map<String, Object> success(@RequestAttribute("msg") String message,
-                                         HttpServletRequest request) {
-          Map<String, Object> result = new HashMap<>();
-          result.put("anno_message", message);
-          result.put("request_message", request.getAttribute("msg"));
-          return result;
+      else {
+         request.removeAttribute(name);
       }
-  
-  }
-  ```
+   });
+}
+```
 
-  
+
 
 #### （3）请求参数处理原理
 
