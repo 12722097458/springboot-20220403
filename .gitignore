@@ -11,6 +11,8 @@
 .mtj.tmp/
 target/
 LICENSE
+.idea/
+*.iml
 
 # Package Files #
 *.jar

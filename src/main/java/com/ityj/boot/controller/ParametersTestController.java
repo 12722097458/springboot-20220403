@@ -1,10 +1,10 @@
 package com.ityj.boot.controller;
 
+import com.ityj.boot.entity.Car;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -36,11 +36,16 @@ public class ParametersTestController {
         return result;
     }
 
-    @PostMapping(path = "/saveUserInfo", produces = "application/json; charset=utf-8")
-    public Map<String, Object> saveUserInfo(@RequestBody String content) throws UnsupportedEncodingException {
+    @PostMapping(path = "/saveUserInfo")
+    public Map<String, Object> saveUserInfo(@RequestBody String content) {
         Map<String, Object> result = new HashMap<>();
         result.put("content", URLDecoder.decode(content, StandardCharsets.UTF_8));
 
         return result;
+    }
+
+    @PostMapping(path = "/saveCarInfo")
+    public Car saveCarInfo(Car car) {
+        return car;
     }
 }

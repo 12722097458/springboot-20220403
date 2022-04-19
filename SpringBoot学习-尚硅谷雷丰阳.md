@@ -1380,7 +1380,43 @@ protected void exposeModelAsRequestAttributes(Map<String, Object> model,
 }
 ```
 
+##### 1.4 自定义参数
 
+> 最终走的也是DispatcherServlet，在参数解析resolveArgument时，走了ModelAttributeMethodProcessor解析器。
+>
+> 内部通过反射以及一系列的converter实现了数据的绑定
+
+```java
+@PostMapping(path = "/saveCarInfo")
+public Car saveCarInfo(Car car) {
+    return car;
+}
+```
+
+```html
+<form action="/saveCarInfo" method="post">
+    <h2>测试自定义参数是如何解析的</h2>
+    品牌：<input name="brand"/> <br/>
+    价格：<input name="price"/> <br/>
+    <input type="submit" value="提交">
+</form>
+```
+
+![image-20220419222318781](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419222318781.png)
+
+![image-20220419222408240](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419222408240.png)
+
+> bindRequestParameters解析request中的参数，将值绑定到binder的target对象中，到此参数获取完毕
+
+![image-20220419225652253](C:/Users/ayinj/AppData/Roaming/Typora/typora-user-images/image-20220419225652253.png)
+
+
+
+> convertForProperty()方法会进行类型转换
+>
+> org.springframework.validation.DataBinder#doBind
+
+![image-20220419234135679](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419234135679.png)
 
 #### （3）请求参数处理原理
 
@@ -1527,12 +1563,3 @@ private HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parame
 ```java
 return resolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory);
 ```
-
-
-
-
-
-```shell
-1. Servlet API: HttpServletRequest\n2. 复杂参数:Map,Model 最终放于请求域中。\n参数获取流程解析
-```
-
