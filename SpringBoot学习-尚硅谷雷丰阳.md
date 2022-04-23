@@ -1014,8 +1014,29 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
 
 
 
-
 ### 1.2 请求参数处理
+
+```java
+DispatcherServlet
+getHandler(request)
+getHandlerAdapter(handler)
+ha.handle(..., handler)
+    handleInternal()
+    	invokeHandlerMethod()
+    		argumentResolvers
+    		returnValueHandlers
+    		invocableMethod.invokeAndHandle(webRequest, mavContainer);
+				invokeForRequest(request,xxx,providedArgs);
+                    getMethodArgumentValues()
+                        resolvers.resolveArgument()
+                        // resolveArgument()是一个接口,ModelAttributeMethodProcessor处理自定义参数Cat
+                returnValueHandlers.handleReturnValue(returnValue,type,...)
+                        selectHandler(value, type); //RequestResponseBodyMethodProcessor处理自定义类型参数Cat
+						handler.handleReturnValue(value, type, mavContainer, webRequest);
+			getModelAndView(mavContainer, modelFactory, webRequest);
+```
+
+
 
 #### （1）请求映射
 
@@ -1402,6 +1423,8 @@ public Car saveCarInfo(Car car) {
 </form>
 ```
 
+==**ModelAttributeMethodProcessor.resolveArgument**==
+
 ![image-20220419222318781](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419222318781.png)
 
 ![image-20220419222408240](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419222408240.png)
@@ -1415,6 +1438,8 @@ public Car saveCarInfo(Car car) {
 > convertForProperty()方法会进行类型转换
 >
 > org.springframework.validation.DataBinder#doBind
+
+![image-20220419234902454](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419234902454.png)
 
 ![image-20220419234135679](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419234135679.png)
 
@@ -1481,11 +1506,9 @@ SpringMVC目标方法能支持多少种参数类型，取决于参数解析器�
 
 ![image-20220416191815891](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416191815891.png)
 
-##### 1.4 返回值处理器
 
-![image-20220416192100478](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416192100478.png)
 
-##### 1.5 如何确定目标方法的每一个值
+##### 1.4 如何确定目标方法的每一个值
 
 > InvocableHandlerMethod，获取到所有参数及其对应的值
 
@@ -1532,7 +1555,7 @@ protected Object[] getMethodArgumentValues(NativeWebRequest request, @Nullable M
 
 
 
-###### 1.5.1 挨个判断哪个解析器执行这个参数类型
+###### 1.4.1 挨个判断哪个解析器执行这个参数类型
 
 ```java
 @Override
@@ -1558,8 +1581,196 @@ private HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parame
 }
 ```
 
-###### 1.5.2 获取参数值
+###### 1.4.2 获取参数值
 
 ```java
 return resolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory);
 ```
+
+
+
+##### 1.5 返回值处理器
+
+![image-20220416192100478](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416192100478.png)
+
+
+
+#### （4）请求响应与内容协商
+
+##### 1.1 响应JSON
+
+###### 1.1.1 @ResponseBody + jackson.jar
+
+> 将结果转换成JSON格式
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+web场景会自动引入json
+↓↓↓
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-json</artifactId>
+    <version>2.4.4</version>
+    <scope>compile</scope>
+</dependency>
+
+json场景主要用的是jackson
+↓↓↓
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.11.4</version>
+    <scope>compile</scope>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.datatype</groupId>
+    <artifactId>jackson-datatype-jdk8</artifactId>
+    <version>2.11.4</version>
+    <scope>compile</scope>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.datatype</groupId>
+    <artifactId>jackson-datatype-jsr310</artifactId>
+    <version>2.11.4</version>
+    <scope>compile</scope>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.module</groupId>
+    <artifactId>jackson-module-parameter-names</artifactId>
+    <version>2.11.4</version>
+    <scope>compile</scope>
+</dependency>
+```
+
+```java
+@GetMapping("/person")
+@ResponseBody
+public Person getPerson() {
+    Person person = new Person();
+    person.setAge(11);
+    person.setName("杰克");
+    return person;
+}
+```
+
+###### 1.1.2 返回参数解析原理
+
+（1）DispatcherServlet在处理完request后会收到一个返回值returnValue
+
+```java
+Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+```
+
+![image-20220423200537134](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423200537134.png)
+
+（2）然后执行handleReturnValue()方法
+
+```java
+this.returnValueHandlers.handleReturnValue(
+      returnValue, getReturnValueType(returnValue), mavContainer, webRequest);
+```
+
+（3）然后通过selectHandler()方法获取到处理当前返回参数的处理器returnValueHandlers
+
+![image-20220423200752959](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423200752959.png)
+
+ReturnValueHandler一共有15种：
+
+![image-20220423202001786](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423202001786.png)
+
+这里可以看到对于自定义的参数类型Person，对应的ValueHandler是**RequestResponseBodyMethodProcessor**，因为满足标注了**@ResponseBody**注解
+
+```java
+@Override
+public boolean supportsReturnType(MethodParameter returnType) {
+   return (AnnotatedElementUtils.hasAnnotation(returnType.getContainingClass(), ResponseBody.class) ||
+         returnType.hasMethodAnnotation(ResponseBody.class));
+}
+```
+
+（4）最后对参数进行处理
+
+通过内容协商writeWithMessageConverters处理
+
+* 利用messageConverters，将person对象写为JSON
+* MediaType内容协商：浏览器默认会以请求头的方式告诉服务器它能就收什么类型的数据。(Accept)
+* 服务器最终根据自己自身的能力，决定自己能生产出(product)什么类型的数据
+* SpringMVC挨个遍历容器底层的HttpMessageConverter，找到能够处理的converter
+  * 最终MappingJackson2HttpMessageConverter可以将对象处理成JSON，并利用其转换成JSON
+
+```java
+handler.handleReturnValue(returnValue, returnType, mavContainer, webRequest);
+
+// 使用消息转换器进行写出操作
+writeWithMessageConverters(returnValue, returnType, inputMessage, outputMessage);
+// 找到对应的MessageConverter
+genericConverter.write(body, targetType, selectedMediaType, outputMessage);
+// 针对Person->JSON 是利用AbstractJackson2HttpMessageConverter中的ObjectWriter进行转化
+writeInternal(t, type, outputMessage);
+objectWriter.writeValue(generator, value);
+```
+
+
+
+###### 1.1.3 HttpMessageConverter原理
+
+![image-20220423235349607](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423235349607.png)
+
+HttpMessageConverter：看能否将此Class类型的对象，转化成MediaType类型的数据。
+
+即：能否将Person对象的数据转换为JSON.（write）
+
+或将JSON类型数据转换成Person对象.（read）
+
+
+
+>  这里MappingJackson2HttpMessageConverter能够实现对Person转化为JSON的处理。
+>
+> 利用jackson底层的objectMapper转换的。
+
+MessageConverters对数据进行处理，转换成json类型，一共9种
+
+![image-20220423202146522](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423202146522.png)
+
+```java
+supports(clazz);
+0 --> byte[].class
+1 --> String.class
+2 --> String.class
+3 --> Resource.class
+4 --> not exists == true
+5 --> DOMSource.class/SAXSource.class/StAXSource.class/StreamSource.class/Source.class
+6 --> not exists == true
+7 --> not exists == true
+8 --> not exists == true
+```
+
+
+
+##### 1.2 内容协商
+
+浏览器可以接受的数据类型Accept以及服务器可以product(提供)的类型
+
+浏览器支持的类型：
+
+q是指权重，越大越优先
+
+![image-20220423231742234](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423231742234.png)
+
+![image-20220423231850843](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423231850843.png)
+
+服务器可以提供的类型
+
+![image-20220423232017255](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423232017255.png)
+
+通过遍历发现服务器可提供的四种类型（有重复），浏览器都能够支持
+
+![image-20220423233252663](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423233252663.png)
+
+最后通过选择，得到application/json;q=0.8的返回类型
+
+![image-20220423234034189](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423234034189.png)

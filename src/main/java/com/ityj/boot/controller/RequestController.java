@@ -1,5 +1,6 @@
 package com.ityj.boot.controller;
 
+import com.ityj.boot.entity.Person;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +49,19 @@ public class RequestController {
         result.put("redirectAttributes", request.getAttribute("redirectAttributes"));
         result.put("request", request.getAttribute("request"));
         return result;
+    }
+
+    /*
+    *   测试返回值解析器如何将对象转换成Json返回到浏览器
+    *   org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.writeInternal
+    * */
+    @GetMapping("/person")
+    @ResponseBody
+    public Person getPerson() {
+        Person person = new Person();
+        person.setAge(11);
+        person.setName("杰克");
+        return person;
     }
 
 }
