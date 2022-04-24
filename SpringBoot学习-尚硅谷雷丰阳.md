@@ -1034,6 +1034,14 @@ ha.handle(..., handler)
                         selectHandler(value, type); //RequestResponseBodyMethodProcessor处理自定义类型参数Cat
 						handler.handleReturnValue(value, type, mavContainer, webRequest);
 			getModelAndView(mavContainer, modelFactory, webRequest);
+processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
+	render(mv, request, response);
+		view.render(mv.getModelInternal(), request, response);
+			renderMergedOutputModel(mergedModel,getRequestToExpose(request),response);//InternalResourceView
+				request.setAttribute(name, value);// 将Map/Model的值放入request请求域中
+		
+
+
 ```
 
 
@@ -1116,7 +1124,7 @@ public OrderedHiddenHttpMethodFilter hiddenHttpMethodFilter() {
 }
 ```
 
-默认这个配置不会加载，只有添加了spring.mvc.hiddenmethod.filter.enable=true才能注册。
+默认这个配置不会加载，只有添加了**spring.mvc.hiddenmethod.filter.enable=true**才能注册。
 
 其最终的实现原理是HiddenHttpMethodFilter
 
@@ -1176,7 +1184,6 @@ SpringMVC功能都从org.springframework.web.servlet.DispatcherServlet#doDispatc
 // Determine handler for the current request.
 // 找到当前请求是使用哪个Handler(Controller的方法)处理
 mappedHandler = getHandler(processedRequest);
-
 ```
 
 Handler是通过遍历HandlerMapping处理器映射中的值来判断并获取的
@@ -1753,7 +1760,7 @@ supports(clazz);
 
 ##### 1.2 内容协商
 
-浏览器可以接受的数据类型Accept以及服务器可以product(提供)的类型
+###### 1.2.1 浏览器可以接受的数据类型Accept以及服务器可以product(提供)的类型.
 
 浏览器支持的类型：
 
@@ -1774,3 +1781,71 @@ q是指权重，越大越优先
 最后通过选择，得到application/json;q=0.8的返回类型
 
 ![image-20220423234034189](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423234034189.png)
+
+
+
+###### 1.2.2 内容协商使用
+
+**根据客户端接收能力不同，返回不同媒体类型的数据。**
+
+（1）对于普通的请求http://localhost:8080/person，根据1.2.1可知最终的MediaType是applicatiin/json。所以返回的是JSON类型数据
+
+```java
+@GetMapping("/person")
+@ResponseBody
+public Person getPerson() {
+    Person person = new Person();
+    person.setAge(11);
+    person.setName("杰克");
+    return person;
+}
+```
+
+（2）在pom.xml中添加支持xml转换的依赖
+
+```xml
+<dependency>
+   <groupId>com.fasterxml.jackson.dataformat</groupId>
+   <artifactId>jackson-dataformat-xml</artifactId>
+</dependency>
+```
+
+再次用chrome浏览器访问`http://localhost:8080/person`，最终结果是xml文件。
+
+![image-20220424134937781](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424134937781.png)
+
+原因就是内容协商导致的：
+
+可以看到浏览器可接受的参数类型包括了xml和\*/\*，但是xml的权重是0.9，所以优先级较高。
+
+服务器端在加入jackson-dataformat-xml依赖后，也支持返回xml类型数据，所以最终的返回值类型是application/xhtml+xml，即XML
+
+![image-20220424135144691](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424135144691.png)
+
+
+
+**新加了一个MappingJackson2XmlHttpMessageConverter**
+
+![image-20220424140107847](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140107847.png)
+
+服务器支持的类型：
+
+![image-20220424135705533](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424135705533.png)
+
+最终使用的类型
+
+![image-20220424135925183](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424135925183.png)
+
+（3）在新加了jackson-dataformat-xml依赖的情况下，再次用POSTMAN访问`http://localhost:8080/person`
+
+最终发现结果还是JSON类型，以为此时POSTMAN配置的Accept是\*/\*，而JSON的优先级较高，所以返回的是JSON类型
+
+![image-20220424140451053](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140451053.png)
+
+![image-20220424140600059](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140600059.png)
+
+![image-20220424140618529](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140618529.png)
+
+![image-20220424140650830](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140650830.png)
+
+![image-20220424140739067](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140739067.png)
