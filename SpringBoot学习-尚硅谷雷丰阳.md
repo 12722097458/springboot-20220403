@@ -1033,6 +1033,12 @@ ha.handle(..., handler)
                 returnValueHandlers.handleReturnValue(returnValue,type,...)
                         selectHandler(value, type); //RequestResponseBodyMethodProcessor处理自定义类型参数Cat
 						handler.handleReturnValue(value, type, mavContainer, webRequest);
+							AbstractMessageConverterMethodProcessor#writeWithMessageConverters()
+                            	acceptableTypes
+                                producibleTypes
+                                selectedMediaType
+                                messageConverters
+                                genericConverter.write(body,...)// 将Person转换成对应的数据类型
 			getModelAndView(mavContainer, modelFactory, webRequest);
 processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 	render(mv, request, response);
@@ -1810,11 +1816,30 @@ public Person getPerson() {
 </dependency>
 ```
 
+**原理：**
+
+```java
+org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration.WebMvcAutoConfigurationAdapter#configureMessageConverters
+    
+org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#addDefaultHttpMessageConverters
+if (jackson2XmlPresent) {
+    Jackson2ObjectMapperBuilder builder = Jackson2ObjectMapperBuilder.xml();
+    if (this.applicationContext != null) {
+        builder.applicationContext(this.applicationContext);
+    }
+    messageConverters.add(new MappingJackson2XmlHttpMessageConverter(builder.build()));
+}
+
+jackson2XmlPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.xml.XmlMapper", classLoader);
+```
+
+
+
 再次用chrome浏览器访问`http://localhost:8080/person`，最终结果是xml文件。
 
 ![image-20220424134937781](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424134937781.png)
 
-原因就是内容协商导致的：
+是内容协商导致的：
 
 可以看到浏览器可接受的参数类型包括了xml和\*/\*，但是xml的权重是0.9，所以优先级较高。
 
@@ -1849,3 +1874,151 @@ public Person getPerson() {
 ![image-20220424140650830](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140650830.png)
 
 ![image-20220424140739067](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140739067.png)
+
+
+
+内容协商原理总结：
+
+* 1、判断当前响应头中是否已经有确定好的媒体类型(一般是过滤器直接处理的)。MediaType
+* 2、找出系统能够支持的媒体类型ProducibleMediaTypes
+* 3、获取最佳匹配的媒体类型mediaTypesToUse
+* 4、获取客户端（浏览器/postman）所支持接收的内容类型。Request Header中的Accept字段
+  * 2.1 通过contentNegotiationManager进行处理，默认通过HeaderContentNegotiationStrategy获取请求头中的Accept的值作为支持的类型
+* 5、遍历循环当前系统中所有的messageConverters，看谁支持操作当前对象(Person)
+* 6、利用当前的converter将对象转成对应的媒体类型。
+
+
+
+###### 1.2.3 开启浏览器参数方式的内容协商功能
+
+浏览器中的请求头信息Accept不容易改变，想要获取不同的(xml/json)返回值类型可以通过修改配置，通过参数format来指定结果的类型。开启基于请求参数的内容协商功能。
+
+（1）修改配置
+
+```yml
+spring:
+  mvc:
+    contentnegotiation:
+      favor-parameter: true   # 开启浏览器请求参数的内容协商
+```
+
+（2）URL添加参数format=json/xml
+
+```shell
+http://localhost:8080/person?format=json
+http://localhost:8080/person?format=xml
+会根据format的值，返回不同类型的数据
+```
+
+（3）原理
+
+对getAcceptableMediaTypes(request);进行处理，获取到format对应的值
+
+![image-20220425231422837](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220425231422837.png)
+
+
+
+**此时的contentNegotiationManager是ParameterContentNegotiationStrategy，最终就是从request中拿到format对应的值，封装成MediaType作为浏览器支持的类型。**
+
+![image-20220425231557304](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220425231557304.png)
+
+
+
+###### 1.2.4 自定义MessageConverter
+
+需求介绍：
+
+目前已知对于/person接口，通过postman可以通过控制Accept参数来决定返回的数据类型是JSON还是XML.(application/json或application/xml)
+
+现在想要通过对于application/x-yj的类型返回0;杰克;11;这样类型的数据，可以通过自定义converter，结合内容协商来实现。
+
+（1）编写MessageConverter
+
+```java
+package com.ityj.boot.converter;
+
+import com.ityj.boot.entity.Person;
+import org.springframework.http.HttpInputMessage;
+import org.springframework.http.HttpOutputMessage;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ *  目前支持写出
+ */
+public class MyPersonMessageConverter implements HttpMessageConverter<Person> {
+    @Override
+    public boolean canRead(Class<?> clazz, MediaType mediaType) {
+        return false;
+    }
+
+    @Override
+    public boolean canWrite(Class<?> clazz, MediaType mediaType) {
+        return clazz.isAssignableFrom(Person.class);
+    }
+
+    @Override
+    public List<MediaType> getSupportedMediaTypes() {
+        return MediaType.parseMediaTypes("application/x-yj");
+    }
+
+    @Override
+    public Person read(Class<? extends Person> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
+        return null;
+    }
+
+    @Override
+    public void write(Person person, MediaType contentType, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+        String result = new StringBuilder().append(person.getId()).append(";")
+                .append(person.getName()).append(";")
+                .append(person.getAge()).append(";").toString();
+        OutputStream outputStream = outputMessage.getBody();
+        outputStream.write(result.getBytes(StandardCharsets.UTF_8));
+    }
+}
+```
+
+（2）配置MessageConverter
+
+```java
+// WebMvcConfigurer定制化SpringMVC的功能
+@Bean
+public WebMvcConfigurer webMvcConfigurer() {
+
+    return new WebMvcConfigurer() {
+        @Override
+        public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+            converters.add(new MyPersonMessageConverter());
+        }
+    };
+}
+```
+
+（3）测试
+
+![image-20220426000408083](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000408083.png)
+
+（4）原理分析
+
+* 解析浏览器，发现可接受的类型只有一个application/x-yj
+
+  ![image-20220426000533428](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000533428.png)
+
+* 服务器可以产出的多了一个，就是自定义的那个x-yj类型
+
+  ![image-20220426000632230](C:/Users/ayinj/AppData/Roaming/Typora/typora-user-images/image-20220426000632230.png)
+
+* 最终返回的类型就是x-yj
+
+  ![image-20220426000725928](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000725928.png)
+
+* messageConverters中也有自己定义的那一个
+
+  ![image-20220426000804650](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000804650.png)
