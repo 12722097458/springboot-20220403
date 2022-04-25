@@ -1,6 +1,7 @@
 package com.ityj.boot.config;
 
 import com.github.xiaoymin.knife4j.core.io.ResourceUtil;
+import com.ityj.boot.converter.MyPersonMessageConverter;
 import com.ityj.boot.entity.Car;
 import com.ityj.boot.entity.Pet;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -10,6 +11,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 /**
  *  1、配置类里面使用标注在方法上给容器注册组件，默认是单实例的
@@ -55,4 +60,15 @@ public class MyConfig {
     }
 
 
+    // WebMvcConfigurer定制化SpringMVC的功能
+    @Bean
+    public WebMvcConfigurer webMvcConfigurer() {
+
+        return new WebMvcConfigurer() {
+            @Override
+            public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+                converters.add(new MyPersonMessageConverter());
+            }
+        };
+    }
 }

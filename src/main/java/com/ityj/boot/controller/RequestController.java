@@ -54,6 +54,19 @@ public class RequestController {
     /*
     *   测试返回值解析器如何将对象转换成Json返回到浏览器
     *   org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.writeInternal
+    *
+    *
+    *   2.现在需求是：
+    *       （1）浏览器请求直接返回xml                     [application/xml]    xmlConverter
+    *       （2）如果是ajax请求，返回json                  [application/json]   jsonConverter
+    *       （3）如果是第三方请求，返回自定义类型的数据    [application/x-yj]   yjConverter
+    *     实现原理是：根据Accept的参数不同，返回不同类型数据。自定义的参数需要通过自定义的converter来处理
+    *
+    *      步骤：
+    *       （1）添加自定义的MessageConverter进入系统层
+    *       （2）系统层会统计能够支持返回哪些类型的数据
+    *       （3）根据内容协商，返回出不同类型数据
+    *
     * */
     @GetMapping("/person")
     @ResponseBody

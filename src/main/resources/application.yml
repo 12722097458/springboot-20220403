@@ -10,6 +10,8 @@ spring:
     hiddenmethod:
       filter:
         enabled: true
+    contentnegotiation:
+      favor-parameter: true   # 开启浏览器请求参数的内容协商
 knife4j:
   enable: true    # http://localhost:8080/doc.html
   setting:
