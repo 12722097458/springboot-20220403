@@ -1,5 +1,6 @@
 package com.ityj.boot.converter;
 
+import com.ityj.boot.constant.CommonConstant;
 import com.ityj.boot.entity.Person;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
@@ -29,7 +30,7 @@ public class MyPersonMessageConverter implements HttpMessageConverter<Person> {
 
     @Override
     public List<MediaType> getSupportedMediaTypes() {
-        return MediaType.parseMediaTypes("application/x-yj");
+        return MediaType.parseMediaTypes(CommonConstant.MEDIA_TYPE_YJ);
     }
 
     @Override

@@ -2022,3 +2022,88 @@ public WebMvcConfigurer webMvcConfigurer() {
 * messageConverters中也有自己定义的那一个
 
   ![image-20220426000804650](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000804650.png)
+
+###### 1.2.5 浏览器与PostMan内容协商完全适配
+
+根据上面的配置可以通过postman配置Accept值为application/x-yj来返回自定义格式的数据。
+
+如果想要在浏览器中通过format=yj来返回自定义数据，目前无法实现。
+
+（1）需要增加配置：
+
+**我们新增这个配置后，有可能会覆盖掉默认的一些功能，所以必须保证原有的ContentNegotiation都是已经添加到这个配置中**
+
+```java
+@Bean
+    public WebMvcConfigurer webMvcConfigurer() {
+
+        return new WebMvcConfigurer() {
+           
+            /*
+            * 我们新增这个配置后，有可能会覆盖掉默认的一些功能，所以必须保证原有的ContentNegotiation都是已经添加到这个配置中
+            * */
+            @Override
+            public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+                Map<String, MediaType> mediaTypes = new HashMap<>();
+                mediaTypes.put("json", MediaType.APPLICATION_JSON);
+                mediaTypes.put("xml", MediaType.APPLICATION_XML);
+                // 为了满足浏览器实现format=yj 来返回MyPersonMessageConverter对应的数据类型，需要添加如下MediaType
+                mediaTypes.put("yj", MediaType.parseMediaType(CommonConstant.MEDIA_TYPE_YJ));
+
+                ParameterContentNegotiationStrategy parameterContentNegotiationStrategy = new ParameterContentNegotiationStrategy(mediaTypes);
+                //parameterContentNegotiationStrategy.setParameterName("yyy");   // 默认format作为key，可以修改
+                ContentNegotiationStrategy headerContentNegotiationStrategy = new HeaderContentNegotiationStrategy();
+                configurer.strategies(Stream.of(parameterContentNegotiationStrategy, headerContentNegotiationStrategy).collect(Collectors.toList()));
+            }
+        };
+    }
+```
+
+当然不能缺少上一步配置的MyPersonMessageConverter().
+
+（2）测试
+
+已经支持了所需要的内容协商内容。原有功能也不受影响。
+
+![image-20220426222215757](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426222215757.png)
+
+![image-20220426222245545](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426222245545.png)
+
+
+
+浏览器：
+
+```java
+http://localhost:8080/person?format=json
+http://localhost:8080/person?format=xml
+http://localhost:8080/person?format=yj
+```
+
+PostMan
+
+```java
+http://localhost:8080/person
+Accept:application/json
+Accept:application/xml
+Accept:application/x-yj
+```
+
+（3）原理
+
+首先计算AcceptableMediaTypes时的ParameterContentNegotiationStrategy多了我们配置的yj类型
+
+![image-20220426222811191](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426222811191.png)
+
+
+
+producibleTypes还是11个，多了我们之前配置的MyPersonMessageConverter
+
+![image-20220426223101090](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426223101090.png)
+
+selectedMediaType选中的是application/x-yj
+
+![image-20220426223123323](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426223123323.png)
+
+通过application/x-yj找到对应的messageConverter：MyPersonMessageConverter
+
+通过执行里面的write()方法，把Person对象转换成最终结果展示出来。

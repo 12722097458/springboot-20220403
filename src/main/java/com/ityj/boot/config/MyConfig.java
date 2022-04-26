@@ -1,6 +1,7 @@
 package com.ityj.boot.config;
 
 import com.github.xiaoymin.knife4j.core.io.ResourceUtil;
+import com.ityj.boot.constant.CommonConstant;
 import com.ityj.boot.converter.MyPersonMessageConverter;
 import com.ityj.boot.entity.Car;
 import com.ityj.boot.entity.Pet;
@@ -11,10 +12,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.accept.ContentNegotiationStrategy;
+import org.springframework.web.accept.HeaderContentNegotiationStrategy;
+import org.springframework.web.accept.ParameterContentNegotiationStrategy;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *  1、配置类里面使用标注在方法上给容器注册组件，默认是单实例的
@@ -68,6 +78,25 @@ public class MyConfig {
             @Override
             public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
                 converters.add(new MyPersonMessageConverter());
+            }
+
+            /*
+            *
+            *   我们新增这个配置后，有可能会覆盖掉默认的一些功能，所以必须保证原有的ContentNegotiation都是已经添加到这个配置中
+            *
+            * */
+            @Override
+            public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+                Map<String, MediaType> mediaTypes = new HashMap<>();
+                mediaTypes.put("json", MediaType.APPLICATION_JSON);
+                mediaTypes.put("xml", MediaType.APPLICATION_XML);
+                // 为了满足浏览器实现format=yj 来返回MyPersonMessageConverter对应的数据类型，需要添加如下MediaType
+                mediaTypes.put("yj", MediaType.parseMediaType(CommonConstant.MEDIA_TYPE_YJ));
+
+                ParameterContentNegotiationStrategy parameterContentNegotiationStrategy = new ParameterContentNegotiationStrategy(mediaTypes);
+                //parameterContentNegotiationStrategy.setParameterName("yyy");   // 默认format作为key，可以修改
+                ContentNegotiationStrategy headerContentNegotiationStrategy = new HeaderContentNegotiationStrategy();
+                configurer.strategies(Stream.of(parameterContentNegotiationStrategy, headerContentNegotiationStrategy).collect(Collectors.toList()));
             }
         };
     }
