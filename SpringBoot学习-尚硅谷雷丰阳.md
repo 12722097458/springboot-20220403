@@ -2107,3 +2107,80 @@ selectedMediaType选中的是application/x-yj
 通过application/x-yj找到对应的messageConverter：MyPersonMessageConverter
 
 通过执行里面的write()方法，把Person对象转换成最终结果展示出来。
+
+
+
+### 1.3 视图解析与模板引擎
+
+#### （1）视图解析
+
+#### （2）模板引擎-Thymeleaf
+
+##### 1.1 Thymeleaf简介
+
+`https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.html#dialects-the-standard-dialect`
+
+##### 1.2 基本语法
+
+##### 1.3 Thymeleaf的基本使用
+
+###### 1.3.1 Thymeleaf使用
+
+（1）引入starter
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+```
+
+（2）编写controller
+
+```java
+@GetMapping("/succ")
+public String success(Model model) {
+    model.addAttribute("msg", "Hello Thymeleaf!");
+    model.addAttribute("link", "https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.html#dialects-the-standard-dialect");
+    // ThymeleafProperties可以看到默认的视图位置为classpath:/templates/， 默认的后缀为.html
+    return "success";
+}
+```
+
+（3）编写html
+
+根据Thymeleaf的默认配置：文件需要放在templates目录下， 默认html格式
+
+```java
+public static final String DEFAULT_PREFIX = "classpath:/templates/";
+
+public static final String DEFAULT_SUFFIX = ".html";
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1 th:text="${msg}">你好啊</h1>
+<a href="http://www.baidu.com" th:href="${link}">百度</a>
+
+</body>
+</html>
+```
+
+（4）自动配置
+
+> Thymeleaf是通过ThymeleafAutoConfiguration进行自动配置的，其绑定的配置文件是ThymeleafProperties
+
+可以看到配置好了
+
+* defaultTemplateResolver
+* SpringTemplateEngine
+
+* ThymeleafViewResolver
+
+我们只需要关注页面的开发，无需进行其他配置。
