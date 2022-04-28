@@ -1012,7 +1012,7 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
 
 
 
-
+![image-20220428215455606](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428215455606.png)
 
 ### 1.2 请求参数处理
 
@@ -1041,13 +1041,16 @@ ha.handle(..., handler)
                                 genericConverter.write(body,...)// 将Person转换成对应的数据类型
 			getModelAndView(mavContainer, modelFactory, webRequest);
 processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
-	render(mv, request, response);
-		view.render(mv.getModelInternal(), request, response);
-			renderMergedOutputModel(mergedModel,getRequestToExpose(request),response);//InternalResourceView
-				request.setAttribute(name, value);// 将Map/Model的值放入request请求域中
+	render(mv, request, response);// 就是渲染视图
+		view = resolveViewName(viewName, mv.getModelInternal(), locale, request);
+		view.render(mv.getModelInternal(), request, response); // 常用ThymeleafView和【AbstractView】
+			//InternalResourceView和RedirectView分别处理forward:和redirect:
+			renderMergedOutputModel(mergedModel,getRequestToExpose(request),response);
+				1.sendRedirect(request, response, targetUrl, this.http10Compatible);//RedirectView
+				2.request.setAttribute(name, value);//InternalResourceView  将Map/Model的值放入request请求域中
+				getRequestDispatcher(request, dispatcherPath).forward(request, response);
+				
 		
-
-
 ```
 
 
@@ -2114,6 +2117,81 @@ selectedMediaType选中的是application/x-yj
 
 #### （1）视图解析
 
+```java
+@Controller
+public class ProcessDispatchResultController {
+
+    /**
+     * 不能直接返回 forward:success来跳转到success.html，因为他的视图解析走的是AbstractView.render()
+     * 不走thymeleaf的前缀和后缀规则。走的是  spring.web.resources.static-locations=classpath:/aa/  默认资源路径是/aa/
+     * @param model
+     * @return
+     */
+    @GetMapping("/fwd")
+    public String forwardPage(Model model) {
+        model.addAttribute("msg", "test forward");
+        return "forward:index.html";  // 访问
+    }
+
+    // AbstractView.render()
+    @GetMapping("/red")
+    public String redirect(Model model) {
+        model.addAttribute("msg", "test redirect");
+        return "redirect:/suc";
+    }
+
+    /**
+     * 直接返回字符串不带forward，会走thymeleafView.render() 所以可以进行页面跳转
+     *
+     * @param model
+     * @return
+     */
+    @GetMapping("/suc")
+    public String suc(Model model) {
+        model.addAttribute("param", "test");
+        return "success";
+    }
+
+}
+
+```
+
+![image-20220428232130553](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428232130553.png)
+
+###### 1.1 视图解析原理流程
+
+* 1、在handler.handleReturnValue()中，是ViewNameMethodReturnValueHandler对字符串类型的返回值进行处理，这里会将viewName赋值到ModelAndViewContainer中，并对RedirectViewName做一定处理
+
+* 2、invokeAndHandle目标方法处理完成后，会调用getModelAndView()方法，将mavContainer转换成ModelAndView。所有请求最终都会返回一个ModelAndView对象：包括数据和视图信息
+
+* 3、processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);处理派发结果（决定页面如何响应）
+
+  * 3.1 进入render()方法进行视图渲染
+
+  * 3.2 resolveViewName()   //最终走的都是ContentNegotiatingViewResolver，视图解析器来解析视图对象
+
+  * 3.3 view.render(mv.getModelInternal(), request, response);   // mv.getModelInternal()就是数据
+
+    * 3.3.1 ThymeleafView.render()   --> 处理直接返回字符串（没有forward）的情况。结合thymeleaf的配置前后缀
+
+      * 这里会默认创建一个模板引擎，然后viewTemplateEngine.process()进行页面渲染处理
+
+    * 3.3.2 AbstractView.render() -> 处理字符串中有forward或redirect的响应。
+
+      * 3.3.2.1 renderMergedOutputModel()
+        * redirect --> DirectView  --> **response.sendRedirect(encodedURL);**
+        * forward --> InternalResourceView
+          * exposeModelAsRequestAttributes(model, request); // 将map和model的值放入request中
+          * **request.getRequestDispatcher(path).forward(request, response);**
+
+      
+
+![image-20220428232338812](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428232338812.png)
+
+![image-20220428234025701](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428234025701.png)
+
+
+
 #### （2）模板引擎-Thymeleaf
 
 ##### 1.1 Thymeleaf简介
@@ -2184,3 +2262,9 @@ public static final String DEFAULT_SUFFIX = ".html";
 * ThymeleafViewResolver
 
 我们只需要关注页面的开发，无需进行其他配置。
+
+
+
+解决表单重复提交的一种方式：登录成功后响应重定向处理。这样url会进行变化。
+
+![image-20220427215148127](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220427215148127.png)
