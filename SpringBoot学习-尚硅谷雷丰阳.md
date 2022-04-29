@@ -1020,8 +1020,9 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
 
 ```java
 DispatcherServlet
-getHandler(request)
+getHandler(request)  // 获得处理请求的Handler以及拦截器信息
 getHandlerAdapter(handler)
+mappedHandler.applyPreHandle(processedRequest, response)  // 处理拦截器的preHandle()方法
 ha.handle(..., handler)
     handleInternal()
     	invokeHandlerMethod()
@@ -1042,6 +1043,7 @@ ha.handle(..., handler)
                                 messageConverters
                                 genericConverter.write(body,...)// 将Person转换成对应的数据类型
 			getModelAndView(mavContainer, modelFactory, webRequest);
+mappedHandler.applyPostHandle(processedRequest, response, mv); // 处理拦截器的postHandle()方法
 processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 	render(mv, request, response);// 就是渲染视图
 		view = resolveViewName(viewName, mv.getModelInternal(), locale, request);
@@ -1051,8 +1053,8 @@ processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchExc
 				1.sendRedirect(request, response, targetUrl, this.http10Compatible);//RedirectView
 				2.request.setAttribute(name, value);//InternalResourceView  将Map/Model的值放入request请求域中
 				getRequestDispatcher(request, dispatcherPath).forward(request, response);
+	mappedHandler.triggerAfterCompletion(request, response, null);// 视图渲染后执行拦截器的afterCompletion()方法
 				
-		
 ```
 
 
@@ -2340,3 +2342,74 @@ public class LoginInterceptorConfig implements WebMvcConfigurer {
 
 }
 ```
+
+##### （3）拦截器源码解析
+
+![image-20220429232331078](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220429232331078.png)
+
+* 1、根据当前的请求，在doDispatcher()获取Handler的同时得到了处理此请求的所有拦截器interceptorList
+
+  ![image-20220429233209547](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220429233209547.png)
+
+
+
+* 2、获取完HandlerAdapter，并且在开始处理Handler之前执行拦截器的preHandle()方法。
+
+  * 2.1 **正序**执行所有拦截器的preHandle()方法，如果所有返回值都为true，则开始执行ha.handle()目标方法
+  * 2.2 如果一个拦截器返回false, 则会**倒序**执行已经执行过的拦截器的afterCompletion()方法，然后当前请求直接结束
+
+  ```java
+  if (!mappedHandler.applyPreHandle(processedRequest, response)) {
+      return;
+  }
+  
+  boolean applyPreHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+      for (int i = 0; i < this.interceptorList.size(); i++) {
+          HandlerInterceptor interceptor = this.interceptorList.get(i);
+          if (!interceptor.preHandle(request, response, this.handler)) {
+              triggerAfterCompletion(request, response, null);
+              return false;
+          }
+          this.interceptorIndex = i;
+      }
+      return true;
+  }
+  
+  void triggerAfterCompletion(HttpServletRequest request, 
+                              HttpServletResponse response, @Nullable Exception ex) {
+      for (int i = this.interceptorIndex; i >= 0; i--) {
+          HandlerInterceptor interceptor = this.interceptorList.get(i);
+          try {
+              interceptor.afterCompletion(request, response, this.handler, ex);
+          }
+          catch (Throwable ex2) {
+              logger.error("HandlerInterceptor.afterCompletion threw exception", ex2);
+          }
+      }
+  }
+  ```
+
+* 3、同时triggerAfterCompletion()方法在多个层级的catch里面，如果代码出现异常，则会直接执行 
+
+afterCompletion()方法。
+
+* 4、执行完目标方法后，会执行postHandler()方法，可以看到也是**倒序**执行
+
+  ```java
+  mappedHandler.applyPostHandle(processedRequest, response, mv);
+  
+  void applyPostHandle(HttpServletRequest request, HttpServletResponse response, 
+                       @Nullable ModelAndView mv) throws Exception {
+      for (int i = this.interceptorList.size() - 1; i >= 0; i--) {
+          HandlerInterceptor interceptor = this.interceptorList.get(i);
+          interceptor.postHandle(request, response, this.handler, mv);
+      }
+  }
+  ```
+
+* 5、如果程序正常执行，会在视图渲染之后(render()执行完毕)，调用triggerAfterCompletion()方法，倒序执行
+
+  ```java
+  mappedHandler.triggerAfterCompletion(request, response, null);
+  ```
+
