@@ -1,5 +1,7 @@
 
 
+
+
 # 一、Spring Boot入门
 
 ## 1、Spring Boot简介
@@ -2268,3 +2270,73 @@ public static final String DEFAULT_SUFFIX = ".html";
 解决表单重复提交的一种方式：登录成功后响应重定向处理。这样url会进行变化。
 
 ![image-20220427215148127](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220427215148127.png)
+
+
+
+### 1.4 拦截器
+
+>  实现HandlerInterceptor接口
+
+##### （1）自定义拦截器的业务逻辑
+
+```java
+@Slf4j
+public class LoginInterceptor implements HandlerInterceptor {
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 进行业务逻辑判断，权限控制等操作
+        Object key = request.getAttribute("key");
+        Object sessionKey = request.getSession().getAttribute("sessionKey");
+        if (key != null || sessionKey != null) {
+            // 用户校验，有权限或者已经登录，继续执行（放行）
+            return true;
+        }
+
+        // 认证未通过，跳转到登录页面
+        request.setAttribute("msg", "请先进行登录操作！");
+        request.getRequestDispatcher("/login").forward(request, response);
+        return false;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        log.info("postHandle...{}", modelAndView);
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        log.info("afterCompletion.....");
+    }
+}
+```
+
+
+
+##### （2）将自定义的拦截器注册到容器中
+
+```java
+package com.ityj.boot.config;
+
+import com.ityj.boot.interceptor.LoginInterceptor;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+/**
+ * 登录拦截：
+ *  1. 编写好拦截器及其业务逻辑，实现HandlerInterceptor接口
+ *  2. 将自定义的拦截器放入容器中
+ *  3. 配置好拦截及放行的请求
+ */
+//@Configuration
+public class LoginInterceptorConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new LoginInterceptor())
+                .addPathPatterns("/**")   //拦截所有请求包括静态资源
+                .excludePathPatterns("/", "/login", "/css/**", "/js/**", "/fonts/**", "/images/**"); // 放行静态资源
+    }
+
+}
+```
