@@ -20,7 +20,7 @@ public class RequestController {
     @GetMapping("/goto")
     public String gotoPage(HttpServletRequest request) {
         request.setAttribute("msg", "信息");
-        return "forward:/success";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
+        return "forward:R-C.jpg";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
     }
 
     @GetMapping("/params")
