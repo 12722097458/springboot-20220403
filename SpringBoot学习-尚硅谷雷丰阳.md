@@ -1020,6 +1020,10 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
 
 ```java
 DispatcherServlet
+checkMultipart(request);  // 处理文件上传请求
+	isMultipart(request) ? this.multipartResolver.resolveMultipart(request) : requeset
+        parseRequest(request) // 针对isMultipart==true文件上传
+        	setMultipartFiles(files)
 getHandler(request)  // 获得处理请求的Handler以及拦截器信息
 getHandlerAdapter(handler)
 mappedHandler.applyPreHandle(processedRequest, response)  // 处理拦截器的preHandle()方法
@@ -1031,8 +1035,10 @@ ha.handle(..., handler)
     		invocableMethod.invokeAndHandle(webRequest, mavContainer);
 				invokeForRequest(request,xxx,providedArgs);
                     getMethodArgumentValues()
-                        resolvers.resolveArgument()
+                        // RequestParamMethodArgumentResolver / PathVariableMethodArgumentResolver
                         // resolveArgument()是一个接口,ModelAttributeMethodProcessor处理自定义参数Cat
+                        // RequestPartMethodArgumentResolver处理文件上传参数:@RequestPart
+                        resolvers.resolveArgument()
                 returnValueHandlers.handleReturnValue(returnValue,type,...)
                         selectHandler(value, type); //RequestResponseBodyMethodProcessor处理自定义类型参数Cat
 						handler.handleReturnValue(value, type, mavContainer, webRequest);
@@ -2413,3 +2419,286 @@ afterCompletion()方法。
   mappedHandler.triggerAfterCompletion(request, response, null);
   ```
 
+
+
+### 1.5 文件上传
+
+> SpringBoot文件上传Demo
+
+#### （1）前端页面
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>文件上传</title>
+</head>
+<body>
+
+<form method="post" th:action="@{/upload}" enctype="multipart/form-data">
+    用户名：<input name="username" type="text"/> <br/>
+    头像：<input name="profilePhoto" type="file"/> <br/>
+    生活照：<input name="lifePhotos" type="file" multiple/> <br/>
+    <input type="submit" value="提交">
+</form>
+
+</body>
+</html>
+```
+
+#### （2）后端代码
+
+```java
+@Controller
+@Slf4j
+public class FileUploadTestController {
+
+    @Value("${path.fileupload}")
+    private String destPath;
+
+    @GetMapping("/fileupload")
+    public String toFileUploadPage() {
+        return "fileupload";
+    }
+
+    @PostMapping("/upload")
+    public String upload(@RequestParam("username") String username,
+                         @RequestPart MultipartFile profilePhoto,
+                         @RequestPart List<MultipartFile> lifePhotos,
+                         Model model) {
+        log.info("username = {}", username);
+        log.info("profilePhoto.size() = {}", profilePhoto.getSize());
+        log.info("lifePhotos数量 = {}", lifePhotos.size());
+
+        CommonUtils.transfer(Stream.of(profilePhoto).collect(Collectors.toList()), destPath);
+        CommonUtils.transfer(lifePhotos, destPath);
+
+        model.addAttribute("msg", "文件上传成功！");
+        return "success";
+
+    }
+}
+```
+
+```yml
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB  # 文件上传大小限制
+path:
+  fileupload: C:/upload/
+
+```
+
+```java
+@Slf4j
+public class CommonUtils {
+
+    public static void transfer(List<MultipartFile> files, String destDirectory) {
+        files.forEach(file -> {
+            String originalFilename = file.getOriginalFilename();
+            if (file.isEmpty()) {
+                log.warn("The size of file:{} is 0", originalFilename);
+            }
+            FileUtil.mkdir(destDirectory);
+            try {
+                File dest = new File(destDirectory + originalFilename);
+                file.transferTo(dest);
+                log.info("File upload successfully: {}", dest.getAbsolutePath());
+            } catch (IOException e) {
+                log.error("Error transferTo:", e);
+            }
+        });
+
+    }
+}
+```
+
+
+
+#### （3）开发要点
+
+##### 3.1 前端提交方式
+
+> **form表单的必须是post，类型enctype="multipart/form-data"**
+
+==request.getContentType()在GET请求下是没有值的，所以isMultipart返回值肯定为false==
+
+```java
+@Override
+public boolean isMultipart(HttpServletRequest request) {
+   return StringUtils.startsWithIgnoreCase(request.getContentType(), "multipart/");
+}
+```
+
+![image-20220430190001661](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220430190001661.png)
+
+##### 3.2 文件上传大小有默认限制
+
+> MultipartAutoConfiguration自动配置的中规定了文件默认大小
+
+```java
+/**
+ * Max file size.
+ */
+private DataSize maxFileSize = DataSize.ofMegabytes(1);
+
+/**
+ * Max request size.
+ */
+private DataSize maxRequestSize = DataSize.ofMegabytes(10);
+```
+
+>  The field profilePhoto exceeds its maximum permitted size of 1048576 bytes.
+
+可以通过配置文件进行修改:
+
+```yml
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB  # 文件上传大小限制
+```
+
+
+
+#### （4）文件上传源码解析
+
+==文件上传主要是对参数@RequestPart MultipartFile profilePhoto进行组装，也就是说最主要的就是参数解析步骤，这里用到的是：**RequestPartMethodArgumentResolver.resolveArgument()**==
+
+步骤：
+
+* 1、入口还是DispatcherServlet.doService()，首先对请求**request**封装处理
+
+  * 1.1 processedRequest = checkMultipart(request);
+
+    * 1.1.1 multipartResolver.isMultipart(request)判断了是否符合文件上传的规范，这里multipartResolver解析器是StandardServletMultipartResolver
+
+      ```java
+      @Override
+      public boolean isMultipart(HttpServletRequest request) {
+          return StringUtils.startsWithIgnoreCase(request.getContentType(), "multipart/");
+      }
+      ```
+
+    * 1.1.2 不是的话，返回普通请求request
+
+    * 1.1.3 是的话，对request进行封装return this.multipartResolver.resolveMultipart(request);
+
+      * 1.1.3.1 会拿到请求中的所有文件参数，放入到缓存中 MultiValueMap<String, MultipartFile> multipartFiles；
+
+        ```java
+        private void parseRequest(HttpServletRequest request) {
+            try {
+                Collection<Part> parts = request.getParts();
+                this.multipartParameterNames = new LinkedHashSet<>(parts.size());
+                MultiValueMap<String, MultipartFile> files = new LinkedMultiValueMap<>(parts.size());
+                for (Part part : parts) {
+                    String headerValue = part.getHeader(HttpHeaders.CONTENT_DISPOSITION);
+                    ContentDisposition disposition = ContentDisposition.parse(headerValue);
+                    String filename = disposition.getFilename();
+                    if (filename != null) {
+                        if (filename.startsWith("=?") && filename.endsWith("?=")) {
+                            filename = MimeDelegate.decode(filename);
+                        }
+                        files.add(part.getName(), new StandardMultipartFile(part, filename));
+                    }
+                    else {
+                        this.multipartParameterNames.add(part.getName());
+                    }
+                }
+                setMultipartFiles(files);
+            }
+            catch (Throwable ex) {
+                handleParseFailure(ex);
+            }
+        }
+        ```
+
+        ![image-20220430202453536](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220430202453536.png)
+
+  * 1.2 然后正常地拿到Handler, Adapter。执行Handler
+
+  * 1.3 ...
+
+  * 1.4 在获取参数时有一点不同，这里用的是RequestPartMethodArgumentResolver
+
+    * 1.4.1 拿到参数名，直接获取其对应的文件信息即可（1.1.3.1的内容）。看到是同一个对象
+
+      ![image-20220430203332619](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220430203332619.png)
+
+      ```java
+      @Nullable
+      public static Object resolveMultipartArgument(String name, MethodParameter parameter, HttpServletRequest request)
+            throws Exception {
+      
+         MultipartHttpServletRequest multipartRequest =
+               WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class);
+      
+         if (MultipartFile.class == parameter.getNestedParameterType()) {
+            if (!isMultipart) {
+               return null;
+            }
+            if (multipartRequest == null) {
+               multipartRequest = new StandardMultipartHttpServletRequest(request);
+            }
+            return multipartRequest.getFile(name);
+         }
+         else if (isMultipartFileCollection(parameter)) {
+            if (!isMultipart) {
+               return null;
+            }
+            if (multipartRequest == null) {
+               multipartRequest = new StandardMultipartHttpServletRequest(request);
+            }
+            List<MultipartFile> files = multipartRequest.getFiles(name);
+            return (!files.isEmpty() ? files : null);
+         }
+         else if (isMultipartFileArray(parameter)) {
+            if (!isMultipart) {
+               return null;
+            }
+            if (multipartRequest == null) {
+               multipartRequest = new StandardMultipartHttpServletRequest(request);
+            }
+            List<MultipartFile> files = multipartRequest.getFiles(name);
+            return (!files.isEmpty() ? files.toArray(new MultipartFile[0]) : null);
+         }
+         else if (Part.class == parameter.getNestedParameterType()) {
+            if (!isMultipart) {
+               return null;
+            }
+            return request.getPart(name);
+         }
+         else if (isPartCollection(parameter)) {
+            if (!isMultipart) {
+               return null;
+            }
+            List<Part> parts = resolvePartList(request, name);
+            return (!parts.isEmpty() ? parts : null);
+         }
+         else if (isPartArray(parameter)) {
+            if (!isMultipart) {
+               return null;
+            }
+            List<Part> parts = resolvePartList(request, name);
+            return (!parts.isEmpty() ? parts.toArray(new Part[0]) : null);
+         }
+         else {
+            return UNRESOLVABLE;
+         }
+      }
+      ```
+
+    * 1.4.2 @RequestPart可以支持单一的文件，数组或集合（前端需要调整：multiple属性）
+
+  * 1.5 拿到参数后执行目标方法，处理对应的文件上传业务逻辑
+
+    > ```java
+    > Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+    > ```
+
+  * 1.6 返回值处理就和文件上传没有关系了，页面跳转等功能可以由视图解析器处理。
