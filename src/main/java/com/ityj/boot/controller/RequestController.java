@@ -1,10 +1,13 @@
 package com.ityj.boot.controller;
 
 import com.ityj.boot.entity.Person;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -15,12 +18,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
+@RequestMapping("/req")
 public class RequestController {
 
     @GetMapping("/goto")
     public String gotoPage(HttpServletRequest request) {
         request.setAttribute("msg", "信息");
-        return "forward:R-C.jpg";    // 请求转发到 /success请求， 服务期间， 地址不变，一次请求一次相应
+        // 如果类名上加了@RequestMapping("/req")，return "forward:R-C.jpg"; 这里forward的路径变成了  /req/R-C.jpg ***
+        // "forward:/R-C.jpg" 这样可以正常转发到R-C.jpg
+        return "forward:/R-C.jpg";    // 请求转发到 R-C.jpg资源， 是在服务器间进行的。url地址不变，服务器间进行了两次请求：1. /req/goto 2. /R-C.jpg
     }
 
     @GetMapping("/params")
@@ -75,6 +81,18 @@ public class RequestController {
         person.setAge(11);
         person.setName("杰克");
         return person;
+    }
+
+    /**
+     *  returnValueHandlers： HttpEntityMethodProcessor
+     *   @GetMapping没有指定path，会默认组装项目名称和类上标注的RequestMapping路径
+     * @return
+     */
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> jsonReturnTest() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "G60188888888");
+        return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
 }

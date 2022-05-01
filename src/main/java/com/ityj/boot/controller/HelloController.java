@@ -33,13 +33,15 @@ public class HelloController {
 
     @Value("#{'${data.list}'.split(',')}")   // 数组或list接收都可以
     private List<String> list2;
-    @Value("#{'${data.list}'.split(',')}")
-    private String[] arr2;
+
+
+    @Value("${path.primary:${path.secondary:/app/project/}}")
+    private String pathValue;
 
     @GetMapping(path = "/hello")
     public String sayHello() {
         log.info(car.toString());
-        return "Hello Spring Boot!";
+        return pathValue;
     }
 
     @GetMapping(path = "/data")

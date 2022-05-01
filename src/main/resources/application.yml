@@ -36,3 +36,5 @@ data:
 
 path:
   fileupload: C:/upload/
+  primary: /app/primary/project/
+  secondary: /app/secondary/project/
