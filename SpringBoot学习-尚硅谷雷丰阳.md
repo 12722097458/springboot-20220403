@@ -2751,4 +2751,137 @@ spring:
 
 #### （3）错误页面自动配置原理
 
-> ErrorMvcAutoConfiguration 
+==ErrorMvcAutoConfiguration==自动配置了异常处理规则：
+
+* 重要的组件：
+  * 1、DefaultErrorAttributes --> errorAttributes
+  * 2、BasicErrorController --> basicErrorController
+  * 3、View defaultErrorView() {}  --> error
+
+
+
+##### 3.1 DefaultErrorAttributes 
+
+```java
+public DefaultErrorAttributes errorAttributes() {}
+public class DefaultErrorAttributes implements ErrorAttributes, HandlerExceptionResolver, Ordered {}
+```
+
+里面有一个getErrorAttributes()方法，定义了错误页面可以支持的字段：
+
+```shell
+timestamp,
+status,
+error,
+exception,
+trace,
+message,
+errors,
+path
+```
+
+##### 3.2 BasicErrorController 
+
+> 这是一个controller，当程序出现异常时，默认会再次发送一个携带异常数据的/error请求，由此controller进行处理
+
+###### 3.2.1 @RequestMapping("${server.error.path:${error.path:/error}}")
+
+类名上标注的这个注解表示动态配置
+
+* 如果配置了server.error.path, 取其值
+* 如果配置了error.path，取其值
+* 都没有配置，取默认值/error
+
+###### 3.2.2 两类处理异常的方法
+
+* 1、如果我们的请求者（浏览器或其他）支持接收text/html类型数据，则会使用errorHtml()，因为RequestMapping没有加value/path的映射，所以默认是类名上的/error。
+* 2、如Postman不支持接收html，则会走error()，返回JSON数据。
+
+```java
+@RequestMapping(produces = MediaType.TEXT_HTML_VALUE)
+public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {
+    HttpStatus status = getStatus(request);
+    Map<String, Object> model = Collections
+        .unmodifiableMap(getErrorAttributes(request, getErrorAttributeOptions(request, MediaType.TEXT_HTML)));
+    response.setStatus(status.value());
+    ModelAndView modelAndView = resolveErrorView(request, response, status, model);
+    return (modelAndView != null) ? modelAndView : new ModelAndView("error", model);
+}
+
+@RequestMapping
+public ResponseEntity<Map<String, Object>> error(HttpServletRequest request) {
+    HttpStatus status = getStatus(request);
+    if (status == HttpStatus.NO_CONTENT) {
+        return new ResponseEntity<>(status);
+    }
+    Map<String, Object> body = getErrorAttributes(request, getErrorAttributeOptions(request, MediaType.ALL));
+    return new ResponseEntity<>(body, status);
+}
+```
+
+###### 3.2.3 resolveErrorView的逻辑
+
+* 1、 首先获取到状态码: 500
+* 2、调用ErrorViewResolver对请求以及解析好的状态码500进行处理。
+  * 2.1 如果在系统中配置了templates/error/500.html， 则直接返回500.html这个视图
+  * 2.2 会解析是否有5xx.html，有的话返回5xx.html
+  * 2.3 都没有的话返回new ModelAndView("error", model);  error视图解析是通过**defaultErrorView**实现的。
+
+```java
+protected ModelAndView resolveErrorView(HttpServletRequest request, 
+                                        HttpServletResponse response, 
+                                        HttpStatus status,
+                                        Map<String, Object> model) {
+   for (ErrorViewResolver resolver : this.errorViewResolvers) {
+      ModelAndView modelAndView = resolver.resolveErrorView(request, status, model);
+      if (modelAndView != null) {
+         return modelAndView;
+      }
+   }
+   return null;
+}
+
+DefaultErrorViewResolver:
+@Override
+public ModelAndView resolveErrorView(HttpServletRequest request, HttpStatus status, Map<String, Object> model) {
+    ModelAndView modelAndView = resolve(String.valueOf(status.value()), model);
+    if (modelAndView == null && SERIES_VIEWS.containsKey(status.series())) {
+        modelAndView = resolve(SERIES_VIEWS.get(status.series()), model);
+    }
+    return modelAndView;
+}
+
+private ModelAndView resolve(String viewName, Map<String, Object> model) {
+    String errorViewName = "error/" + viewName;
+    TemplateAvailabilityProvider provider = this.templateAvailabilityProviders.getProvider(errorViewName,
+                                                                                           this.applicationContext);
+    if (provider != null) {
+        return new ModelAndView(errorViewName, model);
+    }
+    return resolveResource(errorViewName, model);
+}
+```
+
+
+
+##### 3.3 defaultErrorView
+
+```java
+private final StaticView defaultErrorView = new StaticView();
+
+@Bean(name = "error")
+@ConditionalOnMissingBean(name = "error")
+public View defaultErrorView() {
+   return this.defaultErrorView;
+}
+```
+
+![image-20220502145001699](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502145001699.png)
+
+* 3.3.1 首先bean的name是error，同时配置了BeanNameViewResolver，也就是说可以处理View为**error**的请求。
+* 3.3.2 StaticView就是SpringBoot给的默认错误页，里面会展示一些基本的错误信息：timestamp, trace, message...
+
+
+
+
+

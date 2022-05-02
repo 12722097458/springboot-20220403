@@ -1,7 +1,10 @@
 package com.ityj.boot.controller;
 
 import com.ityj.boot.entity.Person;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,11 +12,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.HtmlUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,4 +102,83 @@ public class RequestController {
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
+    @GetMapping("/mv")
+    public ModelAndView mv() {
+        ModelAndView mv = new ModelAndView();
+        mv.addObject("msg", "测试ModelAndView");
+        mv.setViewName("eee");
+        return mv;
+    }
+
+    @GetMapping("/ee")
+    public String ee() {
+        return "eee";
+    }
+
+    @Bean(name = "eee")
+    public View defaultErrorView() {
+        return new MyStaticView();
+    }
+
+    @Slf4j
+    private static class MyStaticView implements View {
+
+        private static final MediaType TEXT_HTML_UTF8 = new MediaType("text", "html", StandardCharsets.UTF_8);
+
+        @Override
+        public String getContentType() {
+            return "text/html";
+        }
+
+        @Override
+        public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response)
+                throws Exception {
+            if (response.isCommitted()) {
+                String message = getMessage(model);
+                log.error(message);
+                return;
+            }
+            response.setContentType(TEXT_HTML_UTF8.toString());
+            StringBuilder builder = new StringBuilder();
+            Object timestamp = model.get("timestamp");
+            Object message = model.get("message");
+            Object trace = model.get("trace");
+            if (response.getContentType() == null) {
+                response.setContentType(getContentType());
+            }
+            builder.append("<html><body><h1>My Whitelabel Error Page</h1>")
+                    .append("<p>BeanNameViewResolver实现接口View时，一定要实现getContentType方法，否则视图解析器将不会返回该视图。</p>")
+                    .append("<p>This application has no explicit mapping for /error, so you are seeing this as a fallback.</p>")
+                    .append("<div id='created'>").append(timestamp).append("</div>")
+                    .append("<div>There was an unexpected error (type=").append(htmlEscape(model.get("error")))
+                    .append(", status=").append(htmlEscape(model.get("status"))).append(").</div>");
+            if (message != null) {
+                builder.append("<div>").append(htmlEscape(message)).append("</div>");
+            }
+            if (trace != null) {
+                builder.append("<div style='white-space:pre-wrap;'>").append(htmlEscape(trace)).append("</div>");
+            }
+            builder.append("</body></html>");
+            response.getWriter().append(builder.toString());
+        }
+
+        private String getMessage(Map<String, ?> model) {
+            Object path = model.get("path");
+            String message = "Cannot render error page for request [" + path + "]";
+            if (model.get("message") != null) {
+                message += " and exception [" + model.get("message") + "]";
+            }
+            message += " as the response has already been committed.";
+            message += " As a result, the response may have the wrong status code.";
+            return message;
+        }
+
+        private String htmlEscape(Object input) {
+            return (input != null) ? HtmlUtils.htmlEscape(input.toString()) : null;
+        }
+
+    }
+
 }
+
+
