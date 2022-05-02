@@ -76,4 +76,10 @@ public class HelloController {
         return "PATCH";
     }
 
+    @GetMapping(path = "/err")
+    public Integer errorMethod(@RequestParam("age") Integer age) {
+        Double.valueOf("sdf");
+        return age;
+    }
+
 }

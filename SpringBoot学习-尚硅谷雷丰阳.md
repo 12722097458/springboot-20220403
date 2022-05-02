@@ -2702,3 +2702,53 @@ spring:
     > ```
 
   * 1.6 返回值处理就和文件上传没有关系了，页面跳转等功能可以由视图解析器处理。
+
+
+
+### 1.6 异常页面处理
+
+> https://docs.spring.io/spring-boot/docs/2.4.13/reference/html/spring-boot-features.html#boot-features-error-handling
+
+> 当程序出现错误时，默认会退出当前请求，携带当前的错误信息执行一个**/error**的请求。SpringBoot进行对/error的处理解析，最终返回定义好的页面或者JSON数据。
+
+
+
+#### （1）默认错误页面
+
+* 1、默认情况下，SpringBoot提供了一个/error的请求，处理所有的错误映射。
+* 2、对于浏览器客户端，响应一个white page错误视图，以Html的形式展示；对机器客户端(Postman)，会返回JSON数据
+* 3、若对其进行自定义，添加View解析/error
+* 4、若完全替换默认行为，可以实现`ErrorController`并注册该类型的bean定义，或添加ErrorAttributes类型的组件以实现现有功能的替换。
+
+针对浏览器请求和Postman发送请求，有两种返回方式：页面和json
+
+**404**
+
+![image-20220501001157322](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001157322.png)
+
+![image-20220501001258728](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001258728.png)
+
+**500**
+
+![image-20220501001414425](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001414425.png)
+
+![image-20220501001433325](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001433325.png)
+
+#### （2）自定义错误页面内容
+
+* 1、添加一个 `/error` 文件夹。可以是public目录或者templates目录
+
+* 2、添加一个404.html来映射404错误
+
+* 3、添加一个5xx.html来映射5xx错误
+
+  ![image-20220501001955816](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001955816.png)
+
+  
+
+* 4、@ControllerAdvice + @ExceptionHandler处理异常
+* 5、实现HandlerExceptionResolver处理异常
+
+#### （3）错误页面自动配置原理
+
+> ErrorMvcAutoConfiguration 
