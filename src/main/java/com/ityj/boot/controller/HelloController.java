@@ -1,6 +1,7 @@
 package com.ityj.boot.controller;
 
 import com.ityj.boot.entity.Car;
+import com.ityj.boot.exception.IncorrectAgeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,6 +79,9 @@ public class HelloController {
 
     @GetMapping(path = "/err")
     public Integer errorMethod(@RequestParam("age") Integer age) {
+        if (age < 0) {
+            throw new IncorrectAgeException();
+        }
         Double.valueOf("sdf");
         return age;
     }

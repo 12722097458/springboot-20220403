@@ -2925,3 +2925,121 @@ public View defaultErrorView() {
 
 
 ==首先使用系统默认异常解析器进行解析，如果无法处理会启用底层默认的错误页面解析器（DefaultErrorViewResolver）==
+
+
+
+#### （5）几种异常处理原理
+
+##### 5.1 @ControllerAdvice + @ExceptionHandler
+
+> 实现指定异常的处理。请求发生异常后，通过ExceptionHandlerExceptionResolver找到处理当前类型异常的方法handleMathException，利用当前方法进行处理。这里返回的是ModelAndView，等于是直接进行页面渲染，不会再次发送请求。
+
+```java
+@ControllerAdvice
+public class GlobalExceptionHandlerExceptionResolver {
+
+    /**
+     * 项目启动过程中会加载当前方法，读取ExceptionHandler注解，并将handleMathException能处理能异常类型
+     * 绑定到ExceptionHandlerExceptionResolver中
+     * @param e
+     * @return
+     */
+    @ExceptionHandler(value = {ArithmeticException.class, NumberFormatException.class})
+    public ModelAndView handleMathException(Exception e) {
+        ModelAndView mv = new ModelAndView();
+        mv.setViewName("error/number_error");
+        mv.addObject("msg", e.toString());
+        return mv;
+    }
+
+}
+```
+
+![image-20220502234244557](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502234244557.png)
+
+![image-20220502234634847](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502234634847.png)
+
+
+
+##### 5.2 自定义异常 + @ResponseStatus
+
+* 1、 在ResponseStatusExceptionResolver中会判断当前异常有没有@ResponseStatus注解
+
+* 2、有的话return resolveResponseStatus(status, request, response, handler, ex);  拿到statusCode和reason然后执行**applyStatusAndReason(statusCode, reason, response);**
+
+  ```java
+  protected ModelAndView applyStatusAndReason(int statusCode, 
+                                              @Nullable String reason, 
+                                              HttpServletResponse response)throws IOException {
+      response.sendError(statusCode, resolvedReason);
+      return new ModelAndView();
+  }
+  ```
+
+* 3、所做的事情就是tomcat直接将状态码以及原因通过sendError再次发送一个请求/error，并返回一个空的ModelAndView来结束本次的请求。
+
+```java
+@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR, reason = "年龄输入错误！")
+public class IncorrectAgeException extends RuntimeException {
+    public IncorrectAgeException(String msg) {
+        super(msg);
+    }
+
+    public IncorrectAgeException() {
+        super();
+    }
+}
+```
+
+```java
+@GetMapping(path = "/err")
+public Integer errorMethod(@RequestParam("age") Integer age) {
+    if (age < 0) {
+        throw new IncorrectAgeException();
+    }
+    Double.valueOf("sdf");
+    return age;
+}
+```
+
+##### 5.3 DefaultHandlerExceptionResolver处理Spring底层的异常
+
+> **也是直接由tomcat发送一个/error请求来处理。**
+
+![image-20220503002019053](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220503002019053.png)
+
+```java
+if (ex instanceof MissingServletRequestParameterException) {
+   return handleMissingServletRequestParameter(
+         (MissingServletRequestParameterException) ex, request, response, handler);
+}
+
+protected ModelAndView handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
+			HttpServletRequest request, HttpServletResponse response, @Nullable Object handler) throws IOException {
+
+    response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+    return new ModelAndView();
+}
+```
+
+
+
+##### 5.4 自定义HandlerExceptionResolver
+
+```java
+@Component
+@Order   // 默认最低优先级Ordered.LOWEST_PRECEDENCE，可以调整。
+public class MyHandlerExceptionResolver implements HandlerExceptionResolver {
+
+    @Override
+    public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        // 具体的异常处理逻辑可以在这里处理。比如支持什么异常，参数怎么处理
+        ModelAndView mv = new ModelAndView();
+        mv.addObject("msg", ex.toString());
+        mv.setViewName("error/handler_resolver_error_page");
+        return mv;
+    }
+}
+```
+
+![image-20220503001748909](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220503001748909.png)
