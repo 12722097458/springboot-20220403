@@ -3043,3 +3043,7 @@ public class MyHandlerExceptionResolver implements HandlerExceptionResolver {
 ```
 
 ![image-20220503001748909](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220503001748909.png)
+
+
+
+##### 5.5 ErrorViewResolver也可以实现自定义异常
