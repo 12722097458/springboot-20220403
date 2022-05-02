@@ -14,6 +14,6 @@ public class ThymeleafViewController {
         model.addAttribute("msg", "Hello Thymeleaf!");
         model.addAttribute("link", "https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.html#dialects-the-standard-dialect");
         // ThymeleafProperties可以看到默认的视图位置为classpath:/templates/， 默认的后缀为.html
-        return "succesS";   // thymeleaf 大小写不敏感
+        return "/succesS";   // thymeleaf 大小写不敏感， 前面加一个/也可以
     }
 }

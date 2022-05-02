@@ -2879,9 +2879,49 @@ public View defaultErrorView() {
 ![image-20220502145001699](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502145001699.png)
 
 * 3.3.1 首先bean的name是error，同时配置了BeanNameViewResolver，也就是说可以处理View为**error**的请求。
+
+  * > BeanNameViewResolver: 将逻辑视图名解析为bean的name属性，从而根据name属性去找对应的bean
+
 * 3.3.2 StaticView就是SpringBoot给的默认错误页，里面会展示一些基本的错误信息：timestamp, trace, message...
 
 
 
+#### （4）异常处理流程源码解析
+
+1、请求进入DispatcherServlet，通过adapter执行对应的handler。执行目标方法时如果出现异常，会直接结束当前请求(webRequest.requestCompleted();)进入catch逻辑。并将异常信息封装在dispatchException中。
+
+2、返回的mv=null, 进入视图解析流程: 
+
+> processDispatchResult(processedRequest, response, mappedHandler, **mv**, **dispatchException**)
+
+3、处理handler发生的异常，处理完成后返回ModelAndView
+
+> mv = processHandlerException(request, response, handler, exception);
+
+* 3.1 系统默认的异常解析器：
+
+  ![image-20220502201816952](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502201816952.png)
+
+* 3.2 遍历所有的异常解析器，看谁能处理当前的异常：**HandlerExceptionResolver**
+
+  ![image-20220502202215961](C:/Users/ayinj/AppData/Roaming/Typora/typora-user-images/image-20220502202216121.png)
+
+* 3.2.1 DefaultErrorAttributes首先进行处理，将异常信息保存到request请求域中，并返回null
+
+  DefaultErrorAttributes实现了HandlerExceptionResolver接口，也是一个异常处理器
+
+  ```java
+  public class DefaultErrorAttributes implements ErrorAttributes, HandlerExceptionResolver, Ordered {}
+  ```
+
+* 3.2.2 默认没有任何人能处理异常，processHandlerException()的返回值也是null。本次请求结束，异常未能处理继续抛出。
+
+4、请求结束但没有任何人处理此异常，底层默认会发送/error请求。
+
+* 4.1 再次进入DispatcherServlet，获取到处理此请求的是**BasicErrorController**
+* 4.2 BasicErrorController.errorHtml()处理对应的异常，用到了errorViewResolvers，这里默认只有一个：**DefaultErrorViewResolver**， 而这个resolver是在ErrorMvcAutoConfiguration进行配置的，其最终返回的就是4xx.html或error请求。
+* 4.3 方法返回ModelAndView，模板引擎进行视图渲染，返回错误提示页面。
 
 
+
+==首先使用系统默认异常解析器进行解析，如果无法处理会启用底层默认的错误页面解析器（DefaultErrorViewResolver）==
