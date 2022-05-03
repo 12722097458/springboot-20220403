@@ -3215,3 +3215,164 @@ public DispatcherServletRegistrationBean dispatcherServletRegistration(Dispatche
 
 
 
+### 1.8 嵌入式Servlet容器
+
+SpringBoot默认支持**tomcat**，**jetty**，**undertow**三种服务器。他们是通过配置类选择使用的。默认为tomcat
+
+> https://docs.spring.io/spring-boot/docs/2.4.13/reference/html/spring-boot-features.html#boot-features-embedded-container-application-context
+
+
+
+#### （1）服务器启动
+
+**ServletWebServerApplicationContext**是一个特殊的IOC容器，Usually a `TomcatServletWebServerFactory`, `JettyServletWebServerFactory`, or `UndertowServletWebServerFactory` has been auto-configured.
+
+* 1.1 SpringBoot项目启动时，调用run方法
+
+```java
+SpringApplication.run(BootApplication.class, args);
+```
+
+* 1.2 refreshContext(context);   --> refresh((ApplicationContext) context);  --> refresh((ConfigurableApplicationContext) applicationContext);  --> applicationContext.refresh();   --> super.refresh();  --> **onRefresh()**  --> createWebServer();
+
+  通过上面的流程，开始创建WebServer， 而创建是通过ServletWebServerFactory进行的。
+
+* 1.3 factory.getWebServer(getSelfInitializer());开始创建并启动服务器：**TomcatServletWebServerFactory**。这里是通过代码的方式启动。（替代了原先tomcat双击startup.bat）
+
+  ```java
+  @Override
+  public WebServer getWebServer(ServletContextInitializer... initializers) {
+     if (this.disableMBeanRegistry) {
+        Registry.disableRegistry();
+     }
+     Tomcat tomcat = new Tomcat();
+     File baseDir = (this.baseDirectory != null) ? this.baseDirectory : createTempDir("tomcat");
+     tomcat.setBaseDir(baseDir.getAbsolutePath());
+     Connector connector = new Connector(this.protocol);
+     connector.setThrowOnFailure(true);
+     tomcat.getService().addConnector(connector);
+     customizeConnector(connector);
+     tomcat.setConnector(connector);
+     tomcat.getHost().setAutoDeploy(false);
+     configureEngine(tomcat.getEngine());
+     for (Connector additionalConnector : this.additionalTomcatConnectors) {
+        tomcat.getService().addConnector(additionalConnector);
+     }
+     prepareContext(tomcat.getHost(), initializers);
+     return getTomcatWebServer(tomcat);
+  }
+  ```
+
+  到这里就创建了一个WebServer。
+
+
+
+#### （2）ServletWebServerFactoryAutoConfiguration
+
+这个配置类是对服务器的自动配置。
+
+```java
+@EnableConfigurationProperties(ServerProperties.class)
+@Import({ ServletWebServerFactoryAutoConfiguration.BeanPostProcessorsRegistrar.class,
+		ServletWebServerFactoryConfiguration.EmbeddedTomcat.class,
+		ServletWebServerFactoryConfiguration.EmbeddedJetty.class,
+		ServletWebServerFactoryConfiguration.EmbeddedUndertow.class })
+public class ServletWebServerFactoryAutoConfiguration {}
+```
+
+1. 可以看出当前配置类绑定了**ServerProperties.class**，同时导入了**ServletWebServerFactoryConfiguration**，也可以看出默认支持三种类型的服务器。
+
+2. ServletWebServerFactoryConfiguration中配置了tomcatServletWebServerFactory，JettyServletWebServerFactory和undertowServletWebServerFactory
+
+
+
+#### （3）切换默认服务器
+
+> spring-boot-starter-web默认导入了spring-boot-starter-tomcat服务器，所以SpringBoot默认是tomcat服务器。
+>
+> 如果想要切换，首先exclude掉spring-boot-starter-tomcat，再加入对应的jetty/undertow依赖。
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-web</artifactId>
+   <exclusions>
+      <exclusion>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-tomcat</artifactId>
+      </exclusion>
+   </exclusions>
+</dependency>
+
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-jetty</artifactId>
+</dependency>
+```
+
+
+
+#### （4）定制Servlet容器
+
+* 1、实现 **WebServerFactoryCustomizer<ConfigurableServletWebServerFactory>**，重写customize()方法，将配置文件里的值和WebServerFactory进行绑定。
+* 2、修改配置文件server.xxx
+* 3、直接自定义ConfigurableServletWebServerFactory
+
+xxxCustomizer是spring中的一种思想，定制化器。可以改变xxx的默认规则 
+
+
+
+### 1.9 定制化原理总结
+
+#### （1）定制化常见方式
+
+* 1、直接修改配置文件
+
+* 2、编写自定义的配置类，加上注解@Configuration  + @Bean向容器中添加或替换默认组件。
+
+  ```java
+  @Bean
+  public OrderedHiddenHttpMethodFilter hiddenHttpMethodFilter() {
+      OrderedHiddenHttpMethodFilter orderedHiddenHttpMethodFilter = new OrderedHiddenHttpMethodFilter();
+      orderedHiddenHttpMethodFilter.setMethodParam("_hide_method");
+      return orderedHiddenHttpMethodFilter;
+  }
+  ```
+
+* 3、**对于Web应用，编写一个配置类，实现WebMvcConfigurer接口，重写对应方法即可实现定制化web功能**
+
+```java
+public class MyConfig implements WebMvcConfigurer {}
+```
+
+* 4、@EnableWebMvc + WebMvcConfigurer + @Bean可以实现全面接管SpringMVC，所有的规则都需要自己重新配置。**WebMvcAutoConfiguration自动配置功能失效。**
+
+  * 4.1 EnableWebMvc导入了**DelegatingWebMvcConfiguration**.class
+
+    ```
+    @Import(DelegatingWebMvcConfiguration.class)
+    public @interface EnableWebMvc {
+    }
+    ```
+
+    * DelegatingWebMvcConfiguration继承了WebMvcConfigurationSupport，而WebMvcAutoConfiguration生效的一个条件是：容器中不能有WebMvcConfigurationSupport组件。**不满足**
+
+      ```java
+      public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {}
+      
+      @ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
+      public class WebMvcAutoConfiguration {}
+      ```
+
+    * WebMvcConfigurationSupport里面配置了一些基本的组件。RequestMappingHandlerAdapter等，这些组件所原来的组件都是从容器中获取的。
+
+  * 4.2 DelegatingWebMvcConfiguration是把系统中的WebMvcConfigurer 拿过来，所有功能的定制都是这些WebMvcConfigurer 合并起来一起生效。
+
+
+
+#### （2）原理套路分析
+
+**场景starter依赖** -- 》 xxxAutoConfiguration --> 里面定义了一系列的组件  --》 这些组件都会绑定一个xxxProperties  --> **配置文件绑定xxxProperties**  
+
+所以我们针对不同功能，通过修改配置文件，也可以达到想要的目的。
+
