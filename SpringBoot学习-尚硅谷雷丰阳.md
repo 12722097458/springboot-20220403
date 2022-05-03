@@ -3047,3 +3047,171 @@ public class MyHandlerExceptionResolver implements HandlerExceptionResolver {
 
 
 ##### 5.5 ErrorViewResolver也可以实现自定义异常
+
+
+
+### 1.7 原生组件的注入
+
+>  Registering Servlets, Filters, and Listeners as Spring Beans
+>
+> https://docs.spring.io/spring-boot/docs/2.4.13/reference/html/spring-boot-features.html#boot-features-embedded-container-servlets-filters-listeners
+
+注入原生组件 Servlets, Filters, and Listeners的方式有两种：注解和配置类
+
+#### （1）注解方式注入原生组件
+
+通过注解方式注入的原生组件，我们需要在启动类上标注==@ServletComponentScan==注解
+
+```java
+@ServletComponentScan(basePackages = {"com.ityj.boot.servlet"})
+```
+
+##### 1.1 Servlet
+
+针对/myservlet/t1和/myservlet/t2的GET请求，会进入doGet()方法，并打印出字符串：MyServlet.doGet()...
+
+```java
+@WebServlet(name = "myServlet", urlPatterns = {"/myservlet/t1", "/myservlet/t2"})
+public class MyServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.getWriter().write("MyServlet.doGet()...");
+    }
+}
+```
+
+##### 1.2 Filter
+
+通过urlPatterns或者servletNames都是可以实现对请求的过滤。
+
+```java
+@Slf4j
+//@WebFilter(urlPatterns = {"/myservlet/t1", "/myservlet/t2"})
+@WebFilter(servletNames = {"myServlet"})
+public class MyServletFilter extends HttpFilter {
+
+    @Override
+    public void init() throws ServletException {
+        log.info("MyServletFilter.init()...");
+        super.init();
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        log.info("MyServletFilter.doFilter()...");
+        super.doFilter(request, response, chain);
+    }
+
+    @Override
+    public void destroy() {
+        log.info("MyServletFilter.destroy()...");
+        super.destroy();
+    }
+}
+```
+
+##### 1.3 Listener
+
+可以监控项目的启动以及销毁
+
+```java
+@WebListener
+@Slf4j
+public class MyWebListener implements ServletContextListener {
+    @Override
+    public void contextInitialized(ServletContextEvent sce) {
+        log.info("MyWebListener.contextInitialized()...");
+
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent sce) {
+        log.info("MyWebListener.contextDestroyed()...");
+    }
+}
+```
+
+#### （2）配置类方式注入原生组件
+
+配置的方式就不需要在启动类上标注==@ServletComponentScan==注解
+
+将上面的注解全部取消掉。添加如下的配置类，可以实现同样的注册绑定。
+
+```java
+// 可以通过这个配置类，来应用自己定义的WebServlet/Filter/Listener
+// 同时不需要在启动类上标注@ServletComponentScan(basePackages = {"com.ityj.boot.servlet"})注解
+@Configuration
+public class MyServletRegistrationConfig {
+
+    // 替代@WebServlet(urlPatterns = {"/myservlet/t1", "/myservlet/t2"})
+    @Bean
+    public ServletRegistrationBean myServlet() {
+        MyServlet myServlet = new MyServlet();
+        return new ServletRegistrationBean(myServlet, "/myservlet/t1", "/myservlet/t2", "/bb/*");
+    }
+
+    // 替代@WebFilter(urlPatterns = {"/myservlet/t1", "/myservlet/t2"})
+    @Bean
+    public FilterRegistrationBean filter() {
+        MyServletFilter myServletFilter = new MyServletFilter();
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(myServletFilter);
+        // 1. myServletFilter可以直接针对myServlet，放入bean
+        filterRegistrationBean.addServletNames("myServlet");
+        // 2. 同时也可以指定过滤的url  单个*指代所有是servlet的用法，双星**是spring的写法
+        filterRegistrationBean.setUrlPatterns(Stream.of("/aa/*").collect(Collectors.toList()));
+
+        return filterRegistrationBean;
+    }
+
+    // 替代 @WebListener
+    @Bean
+    public ServletListenerRegistrationBean listenerRegistration() {
+        MyWebListener myWebListener = new MyWebListener();
+        return new ServletListenerRegistrationBean(myWebListener);
+    }
+
+}
+```
+
+
+
+#### （3）总结
+
+##### 3.1 MyServlet异常处理
+
+> 出现异常会默认走/error请求
+
+```java
+@Override
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    Double.valueOf("safds");
+    resp.getWriter().write("MyServlet.doGet()...");
+}
+```
+
+出现异常，最终会走到**org.apache.catalina.core.StandardHostValve#status**，拼接出一个/error的请求，再次执行处理。
+
+
+
+##### 3.2 请求的精确优先原则
+
+访问`http://localhost:8080/myservlet/t1`为什么是由MyServlet来处理呢？
+
+因为MyServlet可以处理**/myservlet/t1**请求，DispatcherServlet默认处理/请求，根据精确优先原则，/myservlet/t1请求由MyServlet处理。
+
+```java
+@Bean(name = DEFAULT_DISPATCHER_SERVLET_REGISTRATION_BEAN_NAME)
+@ConditionalOnBean(value = DispatcherServlet.class, name = DEFAULT_DISPATCHER_SERVLET_BEAN_NAME)
+public DispatcherServletRegistrationBean dispatcherServletRegistration(DispatcherServlet dispatcherServlet,
+                                                                       WebMvcProperties webMvcProperties, ObjectProvider<MultipartConfigElement> multipartConfig) {
+    DispatcherServletRegistrationBean registration = new DispatcherServletRegistrationBean(dispatcherServlet, webMvcProperties.getServlet().getPath()); // path=/
+    registration.setName(DEFAULT_DISPATCHER_SERVLET_BEAN_NAME);
+    registration.setLoadOnStartup(webMvcProperties.getServlet().getLoadOnStartup());
+    multipartConfig.ifAvailable(registration::setMultipartConfig);
+    return registration;
+}
+```
+
+
+
