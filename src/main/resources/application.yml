@@ -21,6 +21,33 @@ spring:
     url: jdbc:mysql://192.168.137.110:3306/index_test?useSSL=true&useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: root
+
+    druid:          # http://localhost:8080/druid/index.html
+      aop-patterns: 'com.ityj.boot.*'    # 监控Spring Bean
+      filters: stat,wall     # druid底层开启功能, stat(SQL监控功能), wall(防火墙功能)
+
+      filter:
+        stat:
+          enabled: true
+          slow-sql-millis: 1000
+        wall:
+          enabled: true
+          config:
+            drop-table-allow: false
+
+      stat-view-servlet:    # 配置监控页功能
+        enabled: true
+        login-username: root
+        login-password: root
+        reset-enable: true
+
+      web-stat-filter:   # 监控web
+        enabled: true
+        url-pattern: /*
+        exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
+  aop:
+    auto: false
+
 knife4j:
   enable: true    # http://localhost:8080/doc.html
   setting:

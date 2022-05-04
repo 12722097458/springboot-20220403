@@ -3380,11 +3380,9 @@ public class MyConfig implements WebMvcConfigurer {}
 
 ## 3、数据访问
 
-#### 1、SQL
+#### 1.1 SQL
 
-##### 1.1 数据源的自动配置
-
-###### （1）导入JDBC场景
+##### （1）数据源的自动配置
 
 * 1、导入依赖
 
@@ -3439,7 +3437,7 @@ public class MyConfig implements WebMvcConfigurer {}
   }
   ```
 
-###### （2）分析自动配置
+##### （2）自动配置源码解析
 
 自动配置的类：
 
@@ -3465,3 +3463,99 @@ public class MyConfig implements WebMvcConfigurer {}
 * DataSourceTransactionManagerAutoConfiguration：事务的自动配置
 
 * JdbcTemplateAutoConfiguration：JdbcTemplate自动配置，可以crud操作
+
+
+
+##### （3）使用Druid数据源
+
+`https://github.com/alibaba/druid/tree/master/druid-spring-boot-starter`
+
+###### 1.1 引入依赖
+
+```xml
+<dependency>
+   <groupId>com.alibaba</groupId>
+   <artifactId>druid-spring-boot-starter</artifactId>
+   <version>1.2.9</version>
+</dependency>
+```
+
+###### 1.2 根据官方文档，修改配置，实现监控功能
+
+```yml
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.137.110:3306/index_test?useSSL=true&useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+
+    druid:          # http://localhost:8080/druid/index.html
+      aop-patterns: 'com.ityj.boot.*'    # 监控Spring Bean
+      filters: stat,wall     # druid底层开启功能, stat(SQL监控功能), wall(防火墙功能)
+
+      filter:
+        stat:
+          enabled: true
+          slow-sql-millis: 1000
+        wall:
+          enabled: true
+          config:
+            drop-table-allow: false
+
+      stat-view-servlet:    # 配置监控页功能
+        enabled: true
+        login-username: root
+        login-password: root
+        reset-enable: true
+
+      web-stat-filter:   # 监控web
+        enabled: true
+        url-pattern: /*
+        exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
+  aop:
+    auto: false
+
+```
+**配置spring.aop.auto=false是因为，Spring监控只有在这个条件下才开启。**	
+
+```java
+@Bean
+@ConditionalOnProperty(name = "spring.aop.auto",havingValue = "false")
+public DefaultAdvisorAutoProxyCreator advisorAutoProxyCreator() {
+    DefaultAdvisorAutoProxyCreator advisorAutoProxyCreator = new DefaultAdvisorAutoProxyCreator();
+    advisorAutoProxyCreator.setProxyTargetClass(true);
+    return advisorAutoProxyCreator;
+}
+```
+
+###### 1.3 查看监控测试
+
+`http://localhost:8080/druid/index.html`
+
+![image-20220504235702406](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220504235702406.png)
+
+###### 1.4 Druid自动配置源码解析
+
+```java
+@Configuration
+@ConditionalOnClass(DruidDataSource.class)
+@AutoConfigureBefore(DataSourceAutoConfiguration.class)
+@EnableConfigurationProperties({DruidStatProperties.class, DataSourceProperties.class})
+@Import({DruidSpringAopConfiguration.class,
+    DruidStatViewServletConfiguration.class,
+    DruidWebStatFilterConfiguration.class,
+    DruidFilterConfiguration.class})
+public class DruidDataSourceAutoConfigure {}
+```
+
+* 1、**@AutoConfigureBefore**(DataSourceAutoConfiguration.class)，可以看到是在DataSourceAutoConfiguration加载之前处理的，所以会加载DruidDataSource，DataSourceAutoConfiguration中的数据源DataSource都不会进行配置。在引入druid-spring-boot-starter后，项目默认会切换成Druid数据源。
+* 2、Druid绑定的配置文件前缀是：**spring.datasource.druid**和**spring.datasource**
+
+* 3、导入了四个配置项
+  * （1）DruidSpringAopConfiguration：aop-patterns -> 监控Spring Bean，注意注册条件
+  * （2）DruidStatViewServletConfiguration：stat-view-servlet  -> 监控页的配置
+  * （3）DruidWebStatFilterConfiguration：web-stat-filter   -> Web监控的配置
+  * （4）DruidFilterConfiguration：stat,config,encoding,slf4j,log4j,log4j2,commons-log,wall -> 所有Druid自己filter配置
+
+#### 1.2 NoSQL
