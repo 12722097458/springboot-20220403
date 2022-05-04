@@ -204,11 +204,11 @@ spring-boot-dependencies这个项目里有一个properties的标签，里面定�
 
 #### （1）@Configuration
 
-* 基本使用
-* Full模式和Lite模式
+* 基本使用 
+* Full模式和Lite模式: proxyBeanMethods属性，默认为true（Full模式）
   * 最佳实战
-    * 配置类组件之间无依赖关系用Lite模式加速容器启动过程，减少判断（Lite模式是真实的方法）
-    * 配置类组件之间有依赖关系，方法会被调用得到之前单实例组件，用Full模式（代理方法，多次调用getBean()也是同一个方法，会进行判断）
+    * 配置类组件之间有依赖关系，方法会被调用得到之前单实例组件，用**Full模式**（代理方法，多次调用getBean()也是同一个方法，会进行判断），通过代理生成com.ityj.boot.config.MyConfig$$EnhancerBySpringCGLIB$$146ac44c@aca3c85
+    * 配置类组件之间无依赖关系用**Lite模式**加速容器启动过程，减少判断（Lite模式是真实的方法）
 
 #### （2）@Bean, @Component, @Controller, @Service, @repository
 
@@ -3376,3 +3376,92 @@ public class MyConfig implements WebMvcConfigurer {}
 
 所以我们针对不同功能，通过修改配置文件，也可以达到想要的目的。
 
+
+
+## 3、数据访问
+
+#### 1、SQL
+
+##### 1.1 数据源的自动配置
+
+###### （1）导入JDBC场景
+
+* 1、导入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jdbc</artifactId>
+</dependency>
+```
+
+![image-20220504192356774](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220504192356774.png)
+
+根据所需要连接的数据库类型，导入相关的驱动conncetor
+
+```xml
+<!--maven属性就近优先原则-->
+<properties>
+    <mysql.version>8.0.22</mysql.version>
+</properties>
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+</dependency>
+```
+
+* 2、修改配置
+
+  ```yml
+  spring:
+    datasource:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://192.168.137.110:3306/index_test?useSSL=true&useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: root
+  ```
+
+* 3、进行测试
+
+  ```java
+  @SpringBootTest
+  @Slf4j
+  public class BootTest {
+  
+      @Autowired
+      private JdbcTemplate jdbcTemplate;
+  
+      @Test
+      public void testJDBCTemplate() {
+          Long count = jdbcTemplate.queryForObject("select count(1) from test_user", Long.class);
+          log.info("数据条数为：{}", count);
+      }
+  }
+  ```
+
+###### （2）分析自动配置
+
+自动配置的类：
+
+* DataSourceAutoConfiguration：数据源自动配置
+
+  * @EnableConfigurationProperties(DataSourceProperties.class)绑定数据，prefix = "**spring.datasource**"
+  * 数据库连接池配置，自己容器中没有DataSource才会自动配置
+  * 默认配置好的数据原始Hikari
+  * 如果项目引入了多种数据源，可以通过spring.datasource.type=com.zaxxer.hikari.HikariDataSource/其他 进行指定。
+
+  ```java
+  @Configuration(proxyBeanMethods = false)
+  @Conditional(PooledDataSourceCondition.class)
+  @ConditionalOnMissingBean({ DataSource.class, XADataSource.class })
+  @Import({ DataSourceConfiguration.Hikari.class, DataSourceConfiguration.Tomcat.class,
+        DataSourceConfiguration.Dbcp2.class, DataSourceConfiguration.OracleUcp.class,
+        DataSourceConfiguration.Generic.class, DataSourceJmxConfiguration.class })
+  protected static class PooledDataSourceConfiguration {
+  
+  }
+  ```
+
+* DataSourceTransactionManagerAutoConfiguration：事务的自动配置
+
+* JdbcTemplateAutoConfiguration：JdbcTemplate自动配置，可以crud操作

@@ -16,6 +16,11 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 100MB  # 文件上传大小限制
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.137.110:3306/index_test?useSSL=true&useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
 knife4j:
   enable: true    # http://localhost:8080/doc.html
   setting:
@@ -38,3 +43,4 @@ path:
   fileupload: C:/upload/
   primary: /app/primary/project/
   secondary: /app/secondary/project/
+

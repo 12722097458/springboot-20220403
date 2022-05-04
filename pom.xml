@@ -14,9 +14,10 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>springboot-20220403</name>
 	<description>Demo project for Spring Boot</description>
-
+	<!--maven属性就近优先原则-->
 	<properties>
 		<java.version>11</java.version>
+		<mysql.version>8.0.22</mysql.version>
 	</properties>
 
 	<dependencies>
@@ -52,10 +53,14 @@
 			<artifactId>spring-boot-devtools</artifactId>
 			<optional>true</optional>
 		</dependency>
-		<dependency>
+
+		<!--加了这个依赖，就是支持xml返回值。由于Request Header中Accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+			所以可以看出xml的优先级较高，通过内容协商，最终返回的是xml类型，而不是JSON了
+		-->
+		<!--<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-xml</artifactId>
-		</dependency>
+		</dependency>-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -66,6 +71,21 @@
 			<groupId>cn.hutool</groupId>
 			<artifactId>hutool-all</artifactId>
 			<version>5.7.22</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jdbc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
 
 	</dependencies>
