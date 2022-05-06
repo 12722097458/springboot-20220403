@@ -3558,4 +3558,119 @@ public class DruidDataSourceAutoConfigure {}
   * （3）DruidWebStatFilterConfiguration：web-stat-filter   -> Web监控的配置
   * （4）DruidFilterConfiguration：stat,config,encoding,slf4j,log4j,log4j2,commons-log,wall -> 所有Druid自己filter配置
 
+
+
+##### （4）整合Mybatis
+
+> https://mybatis.org/mybatis-3/zh/index.html
+
+###### 1.1 功能实现
+
+（1）引入依赖
+
+```xml
+<dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+    <version>2.2.2</version>
+</dependency>
+```
+
+（2）添加配置
+
+```yml
+mybatis:
+  mapper-locations: classpath:mybatis/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+```
+
+（3）Dao数据访问层编写
+
+```java
+@Mapper
+public interface UserMapper {
+
+    User getUserById(Integer id);
+
+}
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ityj.boot.mapper.UserMapper">
+
+    <select id="getUserById" resultType="com.ityj.boot.entity.User">
+        select * from test_user where id = #{id}
+    </select>
+</mapper>
+```
+
+（4）service业务层编写
+
+```java
+public interface UserService {
+    User getUserById(Integer id);
+}
+```
+
+```java
+@Service
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Override
+    public User getUserById(Integer id) {
+        return userMapper.getUserById(id);
+    }
+}
+```
+
+（5）Controller编写
+
+```java
+@RestController
+@Slf4j
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/user/{id}")
+    public User getUserById(@PathVariable("id") Integer userId) {
+        return userService.getUserById(userId);
+    }
+
+}
+```
+
+（6）功能测试
+
+![image-20220506191908361](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220506191908361.png)
+
+
+
+###### 1.2 自动配置源码分析
+
+```java
+@ConditionalOnSingleCandidate(DataSource.class)
+@EnableConfigurationProperties(MybatisProperties.class)
+@AutoConfigureAfter({ DataSourceAutoConfiguration.class, MybatisLanguageDriverAutoConfiguration.class })
+public class MybatisAutoConfiguration implements InitializingBean {}
+```
+
+* 1、Mybatis配置文件绑定类是MybatisProperties，可以通过修改配置文件中mybatis.xxx来配置对应功能。
+* 2、是在DataSourceAutoConfiguration之后加载的。
+* 3、配置好了SqlSessionFactory
+* 4、配置好了SqlSessionTemplate，即SqlSession。用于操作数据库
+* 5、@Import(AutoConfiguredMapperScannerRegistrar.class)
+* 6、Mapper，只要我们的接口写了@Mapper注解，就会被自动扫描
+
+
+
 #### 1.2 NoSQL

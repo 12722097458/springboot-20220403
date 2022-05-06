@@ -3,11 +3,13 @@ package com.ityj.boot;
 import com.github.xiaoymin.knife4j.core.io.ResourceUtil;
 import com.ityj.boot.config.MyConfig;
 import com.ityj.boot.entity.Pet;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.ConfigurableApplicationContext;
 
+@MapperScan("com.ityj.boot.mapper")
 //@ServletComponentScan(basePackages = {"com.ityj.boot.servlet"})
 @SpringBootApplication
 public class BootApplication {

@@ -70,4 +70,7 @@ path:
   fileupload: C:/upload/
   primary: /app/primary/project/
   secondary: /app/secondary/project/
-
+mybatis:
+  mapper-locations: classpath:mybatis/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
