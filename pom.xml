@@ -108,6 +108,17 @@
 			<version>3.5.1</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<!--若想要切换成jedis客户端：引入依赖，修改配置redis.client-type=jedis即可-->
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

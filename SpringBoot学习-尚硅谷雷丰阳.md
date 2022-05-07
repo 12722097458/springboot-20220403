@@ -3784,3 +3784,171 @@ public MybatisConfiguration() {
 
 
 #### 1.2 NoSQL
+
+##### 1、Redis使用
+
+###### （1）引入依赖
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
+![image-20220507183839066](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507183839066.png)
+
+###### （2）添加配置
+
+```yml
+spring:
+  redis:
+    host: 192.168.137.110
+    port: 6379
+```
+
+###### （3）进行测试
+
+```java
+@Autowired
+private RedisTemplate<String, String> redisTemplate;
+
+@Autowired
+private StringRedisTemplate stringRedisTemplate;
+
+@Test
+public void testRedisTemplate() {
+    ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+    valueOperations.set("test", Instant.now().toString());
+    System.out.println("end.......");
+
+    Object test = valueOperations.get("test");
+    System.out.println("test = " + test);
+}
+
+@Test
+public void testStringRedisTemplate() {
+    ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
+    ops.set("key_date", Instant.now().toString());
+    System.out.println("end.......");
+
+    Object test = ops.get("key_date");
+    System.out.println("key_date = " + test);
+}
+```
+
+##### 2、Redis自动配置原理
+
+自动配置类是**RedisAutoConfiguration**
+
+```java
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnClass(RedisOperations.class)
+@EnableConfigurationProperties(RedisProperties.class)
+@Import({ LettuceConnectionConfiguration.class, JedisConnectionConfiguration.class })
+public class RedisAutoConfiguration {
+
+   @Bean
+   @ConditionalOnMissingBean(name = "redisTemplate")
+   @ConditionalOnSingleCandidate(RedisConnectionFactory.class)
+   public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+     
+   }
+
+   @Bean
+   @ConditionalOnMissingBean
+   @ConditionalOnSingleCandidate(RedisConnectionFactory.class)
+   public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+     
+   }
+
+}
+```
+
+* 1、属性绑定在RedisProperties类中，对应的配置文件前缀**prefix = "spring.redis"**
+* 2、导入了**LettuceConnectionConfiguration**和**JedisConnectionConfiguration**两个Conncetor连接源，即两种类型的客户端。
+  * starter-data-redis默认导入了lettuce-core对应的依赖，所以默认是**LettuceConnection**
+* 3、向容器中注入了**RedisTemplate**和**StringRedisTemplate**两个操作数据的组件
+
+##### 3、切换Jedis
+
+（1）导入Jedis客户端的pom依赖。SpringBoot对jedis进行了版本仲裁，无需指明版本
+
+```xml
+<!--若想要切换成jedis客户端：引入依赖，修改配置redis.client-type=jedis即可-->
+<dependency>
+   <groupId>redis.clients</groupId>
+   <artifactId>jedis</artifactId>
+</dependency>
+```
+
+（2）添加配置
+
+```
+spring:
+	redis:
+  		client-type: jedis
+```
+
+（3）进行测试
+
+因为LettuceConnectionFactory和JedisConnectionFactory都是实现RedisConnectionFactory，所以可以通过RedisConnectionFactory的类型判断当前使用的是哪种客户端。
+
+```java
+@Autowired
+private RedisConnectionFactory connectionFactory;
+
+@Test
+public void testConnector() {
+    System.out.println(connectionFactory.getClass());
+}
+```
+
+##### 4、拓展
+
+> 实现统计所有请求访问次数的功能。
+>
+> 可以通过拦截器的preHandle进行处理，配合redis的increment()方法，实现自增操作。
+
+```java
+/**
+ * 统计所有的请求访问次数，并把结果保存在redis中
+ * uri:count
+ */
+@Component
+public class RequestUriCountInterceptor implements HandlerInterceptor {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        String requestURI = request.getRequestURI();
+        redisTemplate.opsForValue().increment(requestURI);
+        return true;
+    }
+}
+```
+
+```java
+@Configuration
+public class RequestUriCountInterceptorConfig implements WebMvcConfigurer {
+
+    /*
+    *   Filter、Interceptor几乎同样的功能，区别是什么？
+    *   1、Filter是Servlet的原生组件。好处：脱离Spring也能使用。
+    *   2、Interceptor是Spring定义好的接口。好处：可以使用Spring特有的性能，比如Autowired
+    *
+    * */
+
+    @Autowired
+    private RequestUriCountInterceptor requestUriCountInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(requestUriCountInterceptor)
+                .addPathPatterns("/**")   //拦截所有请求包括静态资源
+                .excludePathPatterns("/", "/login", "/css/**", "/js/**", "/fonts/**", "/images/**"); // 放行
+        }
+}
+```
