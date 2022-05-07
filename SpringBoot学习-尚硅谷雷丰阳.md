@@ -3235,6 +3235,11 @@ SpringApplication.run(BootApplication.class, args);
 
 * 1.2 refreshContext(context);   --> refresh((ApplicationContext) context);  --> refresh((ConfigurableApplicationContext) applicationContext);  --> applicationContext.refresh();   --> super.refresh();  --> **onRefresh()**  --> createWebServer();
 
+  ```java
+  ServletWebServerApplicationContext.java
+  this.webServer = factory.getWebServer(getSelfInitializer());
+  ```
+
   通过上面的流程，开始创建WebServer， 而创建是通过ServletWebServerFactory进行的。
 
 * 1.3 factory.getWebServer(getSelfInitializer());开始创建并启动服务器：**TomcatServletWebServerFactory**。这里是通过代码的方式启动。（替代了原先tomcat双击startup.bat）
@@ -3576,6 +3581,8 @@ public class DruidDataSourceAutoConfigure {}
 </dependency>
 ```
 
+![image-20220507135315224](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507135315224.png)
+
 （2）添加配置
 
 ```yml
@@ -3670,6 +3677,109 @@ public class MybatisAutoConfiguration implements InitializingBean {}
 * 4、配置好了SqlSessionTemplate，即SqlSession。用于操作数据库
 * 5、@Import(AutoConfiguredMapperScannerRegistrar.class)
 * 6、Mapper，只要我们的接口写了@Mapper注解，就会被自动扫描
+* 7、@MapperScan("com.ityj.boot.mapper") ，在对应包里可以不加@Mapper注解也能被扫描到。
+
+
+
+##### （5）整合mybatis-plus
+
+`https://www.mybatis-plus.com/guide/`
+
+###### 1.1 引入依赖
+
+```xml
+<dependency>
+   <groupId>com.baomidou</groupId>
+   <artifactId>mybatis-plus-boot-starter</artifactId>
+   <version>3.5.1</version>
+</dependency>
+```
+
+![image-20220507135930891](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507135930891.png)
+
+###### 1.2 编写Mapper
+
+```java
+public interface UserMapper extends BaseMapper<User> {
+}
+```
+
+> **BaseMapper集成很多对数据库CRUD的基本操作，可以直接继承使用。**
+
+![image-20220507143543324](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507143543324.png)
+
+###### 1.3 Service层
+
+（1）接口继承**IService**
+
+```java
+public interface UserService extends IService<User> {
+}
+```
+
+![image-20220507145121148](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507145121148.png)
+
+（2）实现类继承**ServiceImpl**
+
+```
+@Service
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+}
+```
+
+###### 1.4 测试
+
+```java
+@SpringBootTest
+@Slf4j
+public class BootTest {
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Test
+    public void testMybatisPlus() {
+        User user = userMapper.getUserById(53432);
+        log.info("User info: {}", user);
+    }
+}
+```
+
+###### 1.5 自动配置源码解析
+
+```java
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnClass({SqlSessionFactory.class, SqlSessionFactoryBean.class})
+@ConditionalOnSingleCandidate(DataSource.class)
+@EnableConfigurationProperties(MybatisPlusProperties.class)
+@AutoConfigureAfter({DataSourceAutoConfiguration.class, MybatisPlusLanguageDriverAutoConfiguration.class})
+public class MybatisPlusAutoConfiguration implements InitializingBean {}
+```
+
+* 1、绑定的是MybatisPlusProperties，对应配置文件中**prefix=mybatis-plus**
+
+* 2、mapperLocations配置好了，默认的xml路径为`classpath*:/mapper/**.xml`，任意包的类路径下的所有mapper文件夹下的-->所有目录-->所有xx.xml文件。
+
+  * > `classpath*` 它会搜索所有的 classpath，找到所有符合条件的文件，包括当前项目依赖的jar文件中的配置文件。而`classpath`不会到当前项目依赖的jar文件中去寻找。
+
+```java
+private String[] mapperLocations = new String[]{"classpath*:/mapper/**/*.xml"};
+```
+
+* 3、默认支持驼峰规则，无需手动配置
+
+```java
+public MybatisConfiguration() {
+    super();
+    this.mapUnderscoreToCamelCase = true;
+    languageRegistry.setDefaultDriverClass(MybatisXMLLanguageDriver.class);
+}
+```
+
+* 4、SqlSessionFactory默认配置好了，底层是容器中的DataSource
+* 5、SqlSessionTemplate默认配置好了
+* 6、会自动扫描@Mapper注解标注的类
 
 
 

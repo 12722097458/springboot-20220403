@@ -95,10 +95,17 @@
 			<version>1.2.9</version>
 		</dependency>
 
-		<dependency>
+		<!--mybatis-plus引入了mybatis的依赖：mybatis、mybatis-spring。无需重复-->
+		<!--<dependency>
 			<groupId>org.mybatis.spring.boot</groupId>
 			<artifactId>mybatis-spring-boot-starter</artifactId>
 			<version>2.2.2</version>
+		</dependency>-->
+
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-boot-starter</artifactId>
+			<version>3.5.1</version>
 		</dependency>
 
 	</dependencies>
