@@ -1,8 +1,11 @@
-
-
-
-
 # 一、Spring Boot入门
+
+```shell
+视频学习资料(雷神)：
+https://www.bilibili.com/video/BV19K4y1L7MT?p=1
+github:
+https://github.com/12722097458/springboot-20220403.git
+```
 
 ## 1、Spring Boot简介
 
@@ -4242,3 +4245,4 @@ public String getSystemVariable() {
 > // 运行run方法，args是通过命令行传入的
 > return new SpringApplication(primarySources).run(args);
 > ```
+
