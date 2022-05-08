@@ -4141,3 +4141,104 @@ management:
 ![image-20220508131120234](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508131120234.png)
 
 ![image-20220508131200378](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508131200378.png)
+
+
+
+## 5、原理解析
+
+### 1、Profile功能
+
+为了方便SpringBoot多环境适配，springboot简化了profile功能
+
+#### （1）appilcation-env.yml功能
+
+* 1.1 默认配置文件application.yml在任何时候都会加载
+
+* 1.2 制定环境配置文件application-{env}.yml
+
+* 1.3 激活不同环境配置文件的方法：
+
+  * 1.3.1 配置文件中激活
+
+    * ```yml
+      spring:
+        profiles:
+          active: sit
+      ```
+
+  * 1.3.2 命令行激活
+
+    * java -jar xxx.jar --spring.profiles.active=sit  --name=Jack
+    * 命令行可以通过--指定所有配置文件中的属性
+
+* 1.4 默认配置文件和指定环境的配置文件会同时生效
+
+* 1.5 同名配置项，profile指定环境的文件优先
+
+#### （2）@Profile("sit") 条件装配功能
+
+可以放在类上或方法上，规定指定环境生效
+
+
+
+### 2、外部化配置
+
+#### （1）外部配置源
+
+常用：Java属性文件、yaml文件、系统环境变量、命令行参数
+
+* **系统环境变量**
+
+  > 获取JAVA_HOME路径
+
+```java
+@Value("${JAVA_HOME}")
+private String javaHome;
+
+@GetMapping(path = "/system")
+public String getSystemVariable() {
+    return javaHome;
+}
+```
+
+![image-20220508140901742](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508140901742.png)
+
+![image-20220508140800614](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508140800614.png)
+
+
+
+### 3、SpringBoot原理
+
+#### （1）SpringBoot启动过程
+
+执行**SpringApplication.run(BootApplication.class, args);**
+
+##### 1.1 创建SpringApplication
+
+> ```java
+> // 通过读取配置文件(spring.factories)，保存了一些信息: getSpringFactoriesInstances()
+> new SpringApplication(primarySources)
+> ```
+
+* primarySources  --> 主启动类
+
+* webApplicationType   --> 项目的类型: REACTIVE/SERVLET
+
+* bootstrappers(启动引导器)  --> getSpringFactoriesInstances(**Bootstrapper**.class)
+
+* initializers  --> getSpringFactoriesInstances(**ApplicationContextInitializer**.class)
+
+* listeners  --> getSpringFactoriesInstances(**ApplicationListener**.class)
+
+* mainApplicationClass  --> 推断出主程序：main方法
+
+  ![image-20220508183616895](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508183616895.png)
+
+
+
+##### 1.2 运行SpringApplication
+
+> ```java
+> // 运行run方法，args是通过命令行传入的
+> return new SpringApplication(primarySources).run(args);
+> ```

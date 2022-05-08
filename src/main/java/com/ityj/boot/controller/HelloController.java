@@ -39,6 +39,9 @@ public class HelloController {
     @Value("${path.primary:${path.secondary:/app/project/}}")
     private String pathValue;
 
+    @Value("${JAVA_HOME}")
+    private String javaHome;
+
     @GetMapping(path = "/hello")
     public String sayHello() {
         log.info(car.toString());
@@ -84,6 +87,11 @@ public class HelloController {
         }
         Double.valueOf("sdf");
         return age;
+    }
+
+    @GetMapping(path = "/system")
+    public String getSystemVariable() {
+        return javaHome;
     }
 
 }

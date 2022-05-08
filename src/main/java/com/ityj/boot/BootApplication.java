@@ -6,8 +6,9 @@ import com.ityj.boot.entity.Pet;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.ConfigurableApplicationContext;
+
+import java.util.Map;
 
 @MapperScan("com.ityj.boot.mapper")
 //@ServletComponentScan(basePackages = {"com.ityj.boot.servlet"})
@@ -50,6 +51,9 @@ public class BootApplication {
 
 		int beanDefinitionCount = run.getBeanDefinitionCount();
 		System.out.println("共加载beanDefinitionCount = " + beanDefinitionCount);
+
+		Map<String, Object> systemEnvironment = run.getEnvironment().getSystemEnvironment();
+		System.out.println("systemEnvironment = " + systemEnvironment);
 
 	}
 
