@@ -4030,3 +4030,114 @@ management:
 > 2、其他微服务按照一定规范注册成功后，即可通过BootAdmin的监控页面对运行状况进行实时监控
 
 文档地址`https://codecentric.github.io/spring-boot-admin/current/`
+
+#### （1）搭建boot-admin-server(server)
+
+###### 1.1 导入依赖
+
+```java
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<dependency>
+   <groupId>de.codecentric</groupId>
+   <artifactId>spring-boot-admin-starter-server</artifactId>
+   <version>2.4.4</version>
+</dependency>
+```
+
+###### 1.2 设置服务端口
+
+```yml
+server:
+  port: 8181
+```
+
+###### 1.3 启动类添加配置
+
+```java
+@EnableAdminServer
+@SpringBootApplication
+public class SpringBootAdminServerApplication {
+
+   public static void main(String[] args) {
+      SpringApplication.run(SpringBootAdminServerApplication.class, args);
+   }
+
+}
+```
+
+###### 1.4 启动
+
+访问`http://localhost:8181/`即可
+
+#### （2）配置各个微服务(client)
+
+###### 1.1 添加依赖
+
+```java
+<dependency>
+   <groupId>de.codecentric</groupId>
+   <artifactId>spring-boot-admin-starter-client</artifactId>
+   <version>2.4.4</version>
+</dependency>
+```
+
+已经导入了acutator-starter，无需再手动导入
+
+![image-20220508130354739](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508130354739.png)
+
+###### 1.2 修改配置
+
+```yml
+server:
+  port: 8080
+  shutdown: GRACEFUL
+spring:
+  # shutdown最大等待时间
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  boot:
+    admin:
+      client:
+        url: http://localhost:8181
+        instance:
+          name: springboot-20220403
+          prefer-ip: true
+
+management:
+  endpoints:
+    enabled-by-default: true    # 开启所有的指标监控，包括shutdown
+    web:
+      exposure:
+        include: '*'      # http://localhost:8080/actuator 查看所有支持的接口
+```
+
+* （1）首先boot-admin监控是基于actuator，所以各个微服务需要暴露出所需要的endpoints
+
+* （2）配置好boot-server的远程地址：spring.boot.admin.client.url（当前服务注册的地址）
+
+* （3）配置好当前instance名称和获取url的方式
+
+  ```java
+  /**
+   * Name to register with. Defaults to ${spring.application.name}
+   */
+  @Value("${spring.application.name:spring-boot-application}")
+  private String name = "spring-boot-application";
+  
+  /**
+   * Should the registered urls be built with server.address or with hostname.
+   */
+  private boolean preferIp = false;
+  ```
+
+###### 1.3 启动项目即可
+
+> 启动完当前微服务项目，即自动注册到了8181的boot-server中
+
+![image-20220508131120234](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508131120234.png)
+
+![image-20220508131200378](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508131200378.png)

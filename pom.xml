@@ -119,9 +119,16 @@
 			<artifactId>jedis</artifactId>
 		</dependency>
 
-		<dependency>
+		<!--spring-boot-admin-starter-client里已经有了starter-actuator-->
+		<!--<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>-->
+
+		<dependency>
+			<groupId>de.codecentric</groupId>
+			<artifactId>spring-boot-admin-starter-client</artifactId>
+			<version>2.4.4</version>
 		</dependency>
 
 	</dependencies>

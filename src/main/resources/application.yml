@@ -57,6 +57,15 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
+  boot:
+    admin:
+      client:
+        url: http://localhost:8181
+        instance:
+          name: springboot-20220403
+          prefer-ip: true
+
+
 management:
   endpoints:
     enabled-by-default: true    # 开启所有的指标监控，包括shutdown
