@@ -3952,3 +3952,81 @@ public class RequestUriCountInterceptorConfig implements WebMvcConfigurer {
         }
 }
 ```
+
+
+
+## 4、指标监控
+
+### 1.1 SpringBoot Acutator
+
+`https://docs.spring.io/spring-boot/docs/2.4.4/reference/html/production-ready-features.html#production-ready`
+
+导入依赖，添加配置即可开启监控功能
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+```yml
+server:
+  shutdown: GRACEFUL
+spring:
+  # shutdown最大等待时间
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+management:
+  endpoints:
+    enabled-by-default: true    # 开启所有的指标监控，包括shutdown
+    web:
+      exposure:
+        include: '*'      # http://localhost:8080/actuator 查看所有支持的接口
+```
+
+所有支持的指标监控
+
+![image-20220508110657297](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508110657297.png)
+
+### 1.2 Actuator Endpoint
+
+Endpoint就是指标监控的类型：/actuator/**endpointName**
+
+#### （1）常用的Endpoint
+
+##### 1、health健康检查
+
+`http://localhost:8080/actuator/health`
+
+```yml
+management:
+  endpoint:
+    health:
+      show-details: always   # 开启健康检查详细信息
+```
+
+![image-20220508111508137](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508111508137.png)
+
+##### 2、shutdown关闭服务
+
+`curl -X POST http://localhost:8080/actuator/shutdown`接口关闭服务，结合server.shutdown=GRACEFUL和timeout-per-shutdown-phase可以实现优雅退出。
+
+##### 3、metrics运行时指标
+
+![image-20220508111637650](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508111637650.png)
+
+![image-20220508111705250](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508111705250.png)
+
+##### 4、loggers日志记录
+
+
+
+### 1.3 结合Spring Boot Admin监控实现
+
+> 1、新建一个项目，作为BootAdmin的服务端，对外暴露一个端口，让其他的微服务进行注册。
+>
+> 2、其他微服务按照一定规范注册成功后，即可通过BootAdmin的监控页面对运行状况进行实时监控
+
+文档地址`https://codecentric.github.io/spring-boot-admin/current/`
