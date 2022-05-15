@@ -8,3 +8,5 @@ https://www.bilibili.com/video/BV19K4y1L7MT?p=1
 启动虚拟机192.168.137.110, root/root
 2、redis
 启动虚拟机后再手动启动redis server, /usr/local/tools/redis/bin/redis-cli
+3、spring-boot-admin
+这个是一个单独项目，也可以不启动。不影响功能
