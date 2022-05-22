@@ -26,7 +26,7 @@ https://github.com/12722097458/springboot-20220403.git
 
 ### （1）新建一个普通的maven项目
 
-![image-20201214213246257](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20201214213246257.png)
+![image-20201214213246257](D:\我的文件\gitRepository\cloud-image\img\image-20201214213246257.png)
 
 ### （2）导入父项目依赖以及配置
 
@@ -223,7 +223,7 @@ spring-boot-dependencies这个项目里有一个properties的标签，里面定�
 >
 > * @ConditionOnBean(name="Dog")  --> 当组件中有Dog时，才会对下面的组件进行注入
 
-![image-20220407223434913](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220407223434913.png)
+![image-20220407223434913](https://alinyun-images-repository.oss-cn-shanghai.aliyuncs.com/images/image-20220407223434913.png)
 
 ### 1.2 原生配置文件引入
 
@@ -370,7 +370,7 @@ public @interface AutoConfigurationPackage {}
 // 就是将指定包下的所有组件导入到容器中。Main程序所在的包下:com.ityj.boot
 ```
 
-![image-20220409184403270](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220409184403270.png)
+![image-20220409184403270](D:\我的文件\gitRepository\cloud-image\img\image-20220409184403270.png)
 
 ##### b. @Import(AutoConfigurationImportSelector.class)
 
@@ -383,9 +383,9 @@ public @interface AutoConfigurationPackage {}
 主要是spring-boot-autoconfigure-2.6.6.jar!\META-INF\spring.factories下org.springframework.boot.autoconfigure.EnableAutoConfiguration属性，其中2.6.6有134个，在程序中又引入了@EnableKnife4j，所以一共有加载了135个组件配置类
 ```
 
-![image-20220409191717912](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220409191717912.png)
+![image-20220409191717912](D:\我的文件\gitRepository\cloud-image\img\image-20220409191717912.png)
 
-![image-20220409192151919](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220409192151919.png)
+![image-20220409192151919](D:\我的文件\gitRepository\cloud-image\img\image-20220409192151919.png)
 
 
 
@@ -1017,7 +1017,7 @@ public WebMvcAutoConfigurationAdapter(WebProperties webProperties, WebMvcPropert
 
 
 
-![image-20220428215455606](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428215455606.png)
+![image-20220428215455606](D:\我的文件\gitRepository\cloud-image\img\image-20220428215455606.png)
 
 ### 1.2 请求参数处理
 
@@ -1196,7 +1196,7 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
 
 > 所有的请求都会走org.springframework.web.servlet.DispatcherServlet#doDispatch方法
 
-![image-20220413220001944](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413220001944.png)
+![image-20220413220001944](D:\我的文件\gitRepository\cloud-image\img\image-20220413220001944.png)
 
 SpringMVC功能都从org.springframework.web.servlet.DispatcherServlet#doDispatch方法开始分析。
 
@@ -1210,17 +1210,17 @@ mappedHandler = getHandler(processedRequest);
 
 Handler是通过遍历HandlerMapping处理器映射中的值来判断并获取的
 
-![image-20220413221849239](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413221849239.png)
+![image-20220413221849239](D:\我的文件\gitRepository\cloud-image\img\image-20220413221849239.png)
 
 
 
 可以看到访问的GET请求http://localhost:8080/user是在RequestMappingHandlerMapping中的
 
-![image-20220413222135849](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413222135849.png)
+![image-20220413222135849](D:\我的文件\gitRepository\cloud-image\img\image-20220413222135849.png)
 
 mappingRegistory中有着请求以及对应的Handler方法具体映射。
 
-![image-20220413222120503](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413222120503.png)
+![image-20220413222120503](D:\我的文件\gitRepository\cloud-image\img\image-20220413222120503.png)
 
 
 
@@ -1238,7 +1238,7 @@ mappingRegistory中有着请求以及对应的Handler方法具体映射。
   }
   ```
 
-  ![image-20220413225730459](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220413225730459.png)
+  ![image-20220413225730459](D:\我的文件\gitRepository\cloud-image\img\image-20220413225730459.png)
 
 * SpringBoot自动配置了默认的RequestMappingHandlerMapping
 * 请求进来挨个尝试所有的HandlerMapping看是否有请求信息
@@ -1413,7 +1413,7 @@ public Map<String, Object> success(@RequestAttribute(value = "msg", required = f
 
 是在doDispatch()的最后一步  --> processDispatchResult()   --> render(mv, request, response);进行视图渲染赋值
 
-![image-20220417193042987](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220417193042987.png)
+![image-20220417193042987](D:\我的文件\gitRepository\cloud-image\img\image-20220417193042987.png)
 
 ```java
 protected void exposeModelAsRequestAttributes(Map<String, Object> model,
@@ -1454,9 +1454,9 @@ public Car saveCarInfo(Car car) {
 
 ==**ModelAttributeMethodProcessor.resolveArgument**==
 
-![image-20220419222318781](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419222318781.png)
+![image-20220419222318781](D:\我的文件\gitRepository\cloud-image\img\image-20220419222318781.png)
 
-![image-20220419222408240](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419222408240.png)
+![image-20220419222408240](D:\我的文件\gitRepository\cloud-image\img\image-20220419222408240.png)
 
 > bindRequestParameters解析request中的参数，将值绑定到binder的target对象中，到此参数获取完毕
 
@@ -1468,19 +1468,19 @@ public Car saveCarInfo(Car car) {
 >
 > org.springframework.validation.DataBinder#doBind
 
-![image-20220419234902454](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419234902454.png)
+![image-20220419234902454](D:\我的文件\gitRepository\cloud-image\img\image-20220419234902454.png)
 
-![image-20220419234135679](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220419234135679.png)
+![image-20220419234135679](D:\我的文件\gitRepository\cloud-image\img\image-20220419234135679.png)
 
 #### （3）请求参数处理原理
 
 * HandlerMapping中找到能处理请求的Handler（Controller.method()）
 
-![image-20220416184100611](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416184100611.png)
+![image-20220416184100611](D:\我的文件\gitRepository\cloud-image\img\image-20220416184100611.png)
 
 * 为当前Handler找到一个适配器Adapter
 
-![image-20220416184236446](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416184236446.png)
+![image-20220416184236446](D:\我的文件\gitRepository\cloud-image\img\image-20220416184236446.png)
 
 
 
@@ -1490,7 +1490,7 @@ public Car saveCarInfo(Car car) {
 
 > 根据请求的类型，确认对应的适配器Adapter
 
- ![image-20220416184527041](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416184527041.png)
+ ![image-20220416184527041](D:\我的文件\gitRepository\cloud-image\img\image-20220416184527041.png)
 
 0 - 支持方法上标注@RequestMapping
 
@@ -1526,14 +1526,14 @@ Object[] args = getMethodArgumentValues(request, mavContainer, providedArgs);
 
 SpringMVC目标方法能支持多少种参数类型，取决于参数解析器。
 
-![image-20220416191249903](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416191249903.png)
+![image-20220416191249903](D:\我的文件\gitRepository\cloud-image\img\image-20220416191249903.png)
 
 参数解析器接口
 
 * 首先判断是否支持解析这种参数supportsParameter()
 * 支持的话执行resolveArgument()方法
 
-![image-20220416191815891](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416191815891.png)
+![image-20220416191815891](D:\我的文件\gitRepository\cloud-image\img\image-20220416191815891.png)
 
 
 
@@ -1620,7 +1620,7 @@ return resolver.resolveArgument(parameter, mavContainer, webRequest, binderFacto
 
 ##### 1.5 返回值处理器
 
-![image-20220416192100478](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220416192100478.png)
+![image-20220416192100478](D:\我的文件\gitRepository\cloud-image\img\image-20220416192100478.png)
 
 
 
@@ -1694,7 +1694,7 @@ public Person getPerson() {
 Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
 ```
 
-![image-20220423200537134](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423200537134.png)
+![image-20220423200537134](D:\我的文件\gitRepository\cloud-image\img\image-20220423200537134.png)
 
 （2）然后执行handleReturnValue()方法
 
@@ -1705,11 +1705,11 @@ this.returnValueHandlers.handleReturnValue(
 
 （3）然后通过selectHandler()方法获取到处理当前返回参数的处理器returnValueHandlers
 
-![image-20220423200752959](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423200752959.png)
+![image-20220423200752959](D:\我的文件\gitRepository\cloud-image\img\image-20220423200752959.png)
 
 ReturnValueHandler一共有15种：
 
-![image-20220423202001786](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423202001786.png)
+![image-20220423202001786](D:\我的文件\gitRepository\cloud-image\img\image-20220423202001786.png)
 
 这里可以看到对于自定义的参数类型Person，对应的ValueHandler是**RequestResponseBodyMethodProcessor**，因为满足标注了**@ResponseBody**注解
 
@@ -1747,7 +1747,7 @@ objectWriter.writeValue(generator, value);
 
 ###### 1.1.3 HttpMessageConverter原理
 
-![image-20220423235349607](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423235349607.png)
+![image-20220423235349607](D:\我的文件\gitRepository\cloud-image\img\image-20220423235349607.png)
 
 HttpMessageConverter：看能否将此Class类型的对象，转化成MediaType类型的数据。
 
@@ -1763,7 +1763,7 @@ HttpMessageConverter：看能否将此Class类型的对象，转化成MediaType�
 
 MessageConverters对数据进行处理，转换成json类型，一共9种
 
-![image-20220423202146522](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423202146522.png)
+![image-20220423202146522](D:\我的文件\gitRepository\cloud-image\img\image-20220423202146522.png)
 
 ```java
 supports(clazz);
@@ -1788,21 +1788,21 @@ supports(clazz);
 
 q是指权重，越大越优先
 
-![image-20220423231742234](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423231742234.png)
+![image-20220423231742234](D:\我的文件\gitRepository\cloud-image\img\image-20220423231742234.png)
 
-![image-20220423231850843](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423231850843.png)
+![image-20220423231850843](D:\我的文件\gitRepository\cloud-image\img\image-20220423231850843.png)
 
 服务器可以提供的类型
 
-![image-20220423232017255](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423232017255.png)
+![image-20220423232017255](D:\我的文件\gitRepository\cloud-image\img\image-20220423232017255.png)
 
 通过遍历发现服务器可提供的四种类型（有重复），浏览器都能够支持
 
-![image-20220423233252663](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423233252663.png)
+![image-20220423233252663](D:\我的文件\gitRepository\cloud-image\img\image-20220423233252663.png)
 
 最后通过选择，得到application/json;q=0.8的返回类型
 
-![image-20220423234034189](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220423234034189.png)
+![image-20220423234034189](D:\我的文件\gitRepository\cloud-image\img\image-20220423234034189.png)
 
 
 
@@ -1853,7 +1853,7 @@ jackson2XmlPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.xml.
 
 再次用chrome浏览器访问`http://localhost:8080/person`，最终结果是xml文件。
 
-![image-20220424134937781](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424134937781.png)
+![image-20220424134937781](D:\我的文件\gitRepository\cloud-image\img\image-20220424134937781.png)
 
 是内容协商导致的：
 
@@ -1861,35 +1861,35 @@ jackson2XmlPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.xml.
 
 服务器端在加入jackson-dataformat-xml依赖后，也支持返回xml类型数据，所以最终的返回值类型是application/xhtml+xml，即XML
 
-![image-20220424135144691](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424135144691.png)
+![image-20220424135144691](D:\我的文件\gitRepository\cloud-image\img\image-20220424135144691.png)
 
 
 
 **新加了一个MappingJackson2XmlHttpMessageConverter**
 
-![image-20220424140107847](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140107847.png)
+![image-20220424140107847](D:\我的文件\gitRepository\cloud-image\img\image-20220424140107847.png)
 
 服务器支持的类型：
 
-![image-20220424135705533](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424135705533.png)
+![image-20220424135705533](D:\我的文件\gitRepository\cloud-image\img\image-20220424135705533.png)
 
 最终使用的类型
 
-![image-20220424135925183](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424135925183.png)
+![image-20220424135925183](D:\我的文件\gitRepository\cloud-image\img\image-20220424135925183.png)
 
 （3）在新加了jackson-dataformat-xml依赖的情况下，再次用POSTMAN访问`http://localhost:8080/person`
 
 最终发现结果还是JSON类型，以为此时POSTMAN配置的Accept是\*/\*，而JSON的优先级较高，所以返回的是JSON类型
 
-![image-20220424140451053](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140451053.png)
+![image-20220424140451053](D:\我的文件\gitRepository\cloud-image\img\image-20220424140451053.png)
 
-![image-20220424140600059](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140600059.png)
+![image-20220424140600059](D:\我的文件\gitRepository\cloud-image\img\image-20220424140600059.png)
 
-![image-20220424140618529](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140618529.png)
+![image-20220424140618529](D:\我的文件\gitRepository\cloud-image\img\image-20220424140618529.png)
 
-![image-20220424140650830](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140650830.png)
+![image-20220424140650830](D:\我的文件\gitRepository\cloud-image\img\image-20220424140650830.png)
 
-![image-20220424140739067](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220424140739067.png)
+![image-20220424140739067](D:\我的文件\gitRepository\cloud-image\img\image-20220424140739067.png)
 
 
 
@@ -1930,13 +1930,13 @@ http://localhost:8080/person?format=xml
 
 对getAcceptableMediaTypes(request);进行处理，获取到format对应的值
 
-![image-20220425231422837](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220425231422837.png)
+![image-20220425231422837](D:\我的文件\gitRepository\cloud-image\img\image-20220425231422837.png)
 
 
 
 **此时的contentNegotiationManager是ParameterContentNegotiationStrategy，最终就是从request中拿到format对应的值，封装成MediaType作为浏览器支持的类型。**
 
-![image-20220425231557304](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220425231557304.png)
+![image-20220425231557304](D:\我的文件\gitRepository\cloud-image\img\image-20220425231557304.png)
 
 
 
@@ -2019,13 +2019,13 @@ public WebMvcConfigurer webMvcConfigurer() {
 
 （3）测试
 
-![image-20220426000408083](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000408083.png)
+![image-20220426000408083](D:\我的文件\gitRepository\cloud-image\img\image-20220426000408083.png)
 
 （4）原理分析
 
 * 解析浏览器，发现可接受的类型只有一个application/x-yj
 
-  ![image-20220426000533428](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000533428.png)
+  ![image-20220426000533428](D:\我的文件\gitRepository\cloud-image\img\image-20220426000533428.png)
 
 * 服务器可以产出的多了一个，就是自定义的那个x-yj类型
 
@@ -2033,11 +2033,11 @@ public WebMvcConfigurer webMvcConfigurer() {
 
 * 最终返回的类型就是x-yj
 
-  ![image-20220426000725928](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000725928.png)
+  ![image-20220426000725928](D:\我的文件\gitRepository\cloud-image\img\image-20220426000725928.png)
 
 * messageConverters中也有自己定义的那一个
 
-  ![image-20220426000804650](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426000804650.png)
+  ![image-20220426000804650](D:\我的文件\gitRepository\cloud-image\img\image-20220426000804650.png)
 
 ###### 1.2.5 浏览器与PostMan内容协商完全适配
 
@@ -2081,9 +2081,9 @@ public WebMvcConfigurer webMvcConfigurer() {
 
 已经支持了所需要的内容协商内容。原有功能也不受影响。
 
-![image-20220426222215757](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426222215757.png)
+![image-20220426222215757](D:\我的文件\gitRepository\cloud-image\img\image-20220426222215757.png)
 
-![image-20220426222245545](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426222245545.png)
+![image-20220426222245545](D:\我的文件\gitRepository\cloud-image\img\image-20220426222245545.png)
 
 
 
@@ -2108,17 +2108,17 @@ Accept:application/x-yj
 
 首先计算AcceptableMediaTypes时的ParameterContentNegotiationStrategy多了我们配置的yj类型
 
-![image-20220426222811191](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426222811191.png)
+![image-20220426222811191](D:\我的文件\gitRepository\cloud-image\img\image-20220426222811191.png)
 
 
 
 producibleTypes还是11个，多了我们之前配置的MyPersonMessageConverter
 
-![image-20220426223101090](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426223101090.png)
+![image-20220426223101090](D:\我的文件\gitRepository\cloud-image\img\image-20220426223101090.png)
 
 selectedMediaType选中的是application/x-yj
 
-![image-20220426223123323](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220426223123323.png)
+![image-20220426223123323](D:\我的文件\gitRepository\cloud-image\img\image-20220426223123323.png)
 
 通过application/x-yj找到对应的messageConverter：MyPersonMessageConverter
 
@@ -2169,7 +2169,7 @@ public class ProcessDispatchResultController {
 
 ```
 
-![image-20220428232130553](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428232130553.png)
+![image-20220428232130553](D:\我的文件\gitRepository\cloud-image\img\image-20220428232130553.png)
 
 ###### 1.1 视图解析原理流程
 
@@ -2199,9 +2199,9 @@ public class ProcessDispatchResultController {
 
       
 
-![image-20220428232338812](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428232338812.png)
+![image-20220428232338812](D:\我的文件\gitRepository\cloud-image\img\image-20220428232338812.png)
 
-![image-20220428234025701](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220428234025701.png)
+![image-20220428234025701](D:\我的文件\gitRepository\cloud-image\img\image-20220428234025701.png)
 
 
 
@@ -2280,7 +2280,7 @@ public static final String DEFAULT_SUFFIX = ".html";
 
 解决表单重复提交的一种方式：登录成功后响应重定向处理。这样url会进行变化。
 
-![image-20220427215148127](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220427215148127.png)
+![image-20220427215148127](D:\我的文件\gitRepository\cloud-image\img\image-20220427215148127.png)
 
 
 
@@ -2354,11 +2354,11 @@ public class LoginInterceptorConfig implements WebMvcConfigurer {
 
 ##### （3）拦截器源码解析
 
-![image-20220429232331078](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220429232331078.png)
+![image-20220429232331078](D:\我的文件\gitRepository\cloud-image\img\image-20220429232331078.png)
 
 * 1、根据当前的请求，在doDispatcher()获取Handler的同时得到了处理此请求的所有拦截器interceptorList
 
-  ![image-20220429233209547](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220429233209547.png)
+  ![image-20220429233209547](D:\我的文件\gitRepository\cloud-image\img\image-20220429233209547.png)
 
 
 
@@ -2536,7 +2536,7 @@ public boolean isMultipart(HttpServletRequest request) {
 }
 ```
 
-![image-20220430190001661](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220430190001661.png)
+![image-20220430190001661](D:\我的文件\gitRepository\cloud-image\img\image-20220430190001661.png)
 
 ##### 3.2 文件上传大小有默认限制
 
@@ -2621,7 +2621,7 @@ spring:
         }
         ```
 
-        ![image-20220430202453536](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220430202453536.png)
+        ![image-20220430202453536](D:\我的文件\gitRepository\cloud-image\img\image-20220430202453536.png)
 
   * 1.2 然后正常地拿到Handler, Adapter。执行Handler
 
@@ -2631,7 +2631,7 @@ spring:
 
     * 1.4.1 拿到参数名，直接获取其对应的文件信息即可（1.1.3.1的内容）。看到是同一个对象
 
-      ![image-20220430203332619](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220430203332619.png)
+      ![image-20220430203332619](D:\我的文件\gitRepository\cloud-image\img\image-20220430203332619.png)
 
       ```java
       @Nullable
@@ -2727,15 +2727,15 @@ spring:
 
 **404**
 
-![image-20220501001157322](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001157322.png)
+![image-20220501001157322](D:\我的文件\gitRepository\cloud-image\img\image-20220501001157322.png)
 
-![image-20220501001258728](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001258728.png)
+![image-20220501001258728](D:\我的文件\gitRepository\cloud-image\img\image-20220501001258728.png)
 
 **500**
 
-![image-20220501001414425](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001414425.png)
+![image-20220501001414425](D:\我的文件\gitRepository\cloud-image\img\image-20220501001414425.png)
 
-![image-20220501001433325](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001433325.png)
+![image-20220501001433325](D:\我的文件\gitRepository\cloud-image\img\image-20220501001433325.png)
 
 #### （2）自定义错误页面内容
 
@@ -2745,7 +2745,7 @@ spring:
 
 * 3、添加一个5xx.html来映射5xx错误
 
-  ![image-20220501001955816](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220501001955816.png)
+  ![image-20220501001955816](D:\我的文件\gitRepository\cloud-image\img\image-20220501001955816.png)
 
   
 
@@ -2879,7 +2879,7 @@ public View defaultErrorView() {
 }
 ```
 
-![image-20220502145001699](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502145001699.png)
+![image-20220502145001699](D:\我的文件\gitRepository\cloud-image\img\image-20220502145001699.png)
 
 * 3.3.1 首先bean的name是error，同时配置了BeanNameViewResolver，也就是说可以处理View为**error**的请求。
 
@@ -2903,7 +2903,7 @@ public View defaultErrorView() {
 
 * 3.1 系统默认的异常解析器：
 
-  ![image-20220502201816952](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502201816952.png)
+  ![image-20220502201816952](D:\我的文件\gitRepository\cloud-image\img\image-20220502201816952.png)
 
 * 3.2 遍历所有的异常解析器，看谁能处理当前的异常：**HandlerExceptionResolver**
 
@@ -2958,9 +2958,9 @@ public class GlobalExceptionHandlerExceptionResolver {
 }
 ```
 
-![image-20220502234244557](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502234244557.png)
+![image-20220502234244557](D:\我的文件\gitRepository\cloud-image\img\image-20220502234244557.png)
 
-![image-20220502234634847](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220502234634847.png)
+![image-20220502234634847](D:\我的文件\gitRepository\cloud-image\img\image-20220502234634847.png)
 
 
 
@@ -3009,7 +3009,7 @@ public Integer errorMethod(@RequestParam("age") Integer age) {
 
 > **也是直接由tomcat发送一个/error请求来处理。**
 
-![image-20220503002019053](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220503002019053.png)
+![image-20220503002019053](D:\我的文件\gitRepository\cloud-image\img\image-20220503002019053.png)
 
 ```java
 if (ex instanceof MissingServletRequestParameterException) {
@@ -3045,7 +3045,7 @@ public class MyHandlerExceptionResolver implements HandlerExceptionResolver {
 }
 ```
 
-![image-20220503001748909](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220503001748909.png)
+![image-20220503001748909](D:\我的文件\gitRepository\cloud-image\img\image-20220503001748909.png)
 
 
 
@@ -3401,7 +3401,7 @@ public class MyConfig implements WebMvcConfigurer {}
 </dependency>
 ```
 
-![image-20220504192356774](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220504192356774.png)
+![image-20220504192356774](D:\我的文件\gitRepository\cloud-image\img\image-20220504192356774.png)
 
 根据所需要连接的数据库类型，导入相关的驱动conncetor
 
@@ -3541,7 +3541,7 @@ public DefaultAdvisorAutoProxyCreator advisorAutoProxyCreator() {
 
 `http://localhost:8080/druid/index.html`
 
-![image-20220504235702406](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220504235702406.png)
+![image-20220504235702406](D:\我的文件\gitRepository\cloud-image\img\image-20220504235702406.png)
 
 ###### 1.4 Druid自动配置源码解析
 
@@ -3584,7 +3584,7 @@ public class DruidDataSourceAutoConfigure {}
 </dependency>
 ```
 
-![image-20220507135315224](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507135315224.png)
+![image-20220507135315224](D:\我的文件\gitRepository\cloud-image\img\image-20220507135315224.png)
 
 （2）添加配置
 
@@ -3661,7 +3661,7 @@ public class UserController {
 
 （6）功能测试
 
-![image-20220506191908361](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220506191908361.png)
+![image-20220506191908361](D:\我的文件\gitRepository\cloud-image\img\image-20220506191908361.png)
 
 
 
@@ -3698,7 +3698,7 @@ public class MybatisAutoConfiguration implements InitializingBean {}
 </dependency>
 ```
 
-![image-20220507135930891](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507135930891.png)
+![image-20220507135930891](D:\我的文件\gitRepository\cloud-image\img\image-20220507135930891.png)
 
 ###### 1.2 编写Mapper
 
@@ -3709,7 +3709,7 @@ public interface UserMapper extends BaseMapper<User> {
 
 > **BaseMapper集成很多对数据库CRUD的基本操作，可以直接继承使用。**
 
-![image-20220507143543324](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507143543324.png)
+![image-20220507143543324](D:\我的文件\gitRepository\cloud-image\img\image-20220507143543324.png)
 
 ###### 1.3 Service层
 
@@ -3720,7 +3720,7 @@ public interface UserService extends IService<User> {
 }
 ```
 
-![image-20220507145121148](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507145121148.png)
+![image-20220507145121148](D:\我的文件\gitRepository\cloud-image\img\image-20220507145121148.png)
 
 （2）实现类继承**ServiceImpl**
 
@@ -3799,7 +3799,7 @@ public MybatisConfiguration() {
 </dependency>
 ```
 
-![image-20220507183839066](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220507183839066.png)
+![image-20220507183839066](D:\我的文件\gitRepository\cloud-image\img\image-20220507183839066.png)
 
 ###### （2）添加配置
 
@@ -3991,7 +3991,7 @@ management:
 
 所有支持的指标监控
 
-![image-20220508110657297](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508110657297.png)
+![image-20220508110657297](D:\我的文件\gitRepository\cloud-image\img\image-20220508110657297.png)
 
 ### 1.2 Actuator Endpoint
 
@@ -4010,7 +4010,7 @@ management:
       show-details: always   # 开启健康检查详细信息
 ```
 
-![image-20220508111508137](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508111508137.png)
+![image-20220508111508137](D:\我的文件\gitRepository\cloud-image\img\image-20220508111508137.png)
 
 ##### 2、shutdown关闭服务
 
@@ -4018,9 +4018,9 @@ management:
 
 ##### 3、metrics运行时指标
 
-![image-20220508111637650](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508111637650.png)
+![image-20220508111637650](D:\我的文件\gitRepository\cloud-image\img\image-20220508111637650.png)
 
-![image-20220508111705250](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508111705250.png)
+![image-20220508111705250](D:\我的文件\gitRepository\cloud-image\img\image-20220508111705250.png)
 
 ##### 4、loggers日志记录
 
@@ -4089,7 +4089,7 @@ public class SpringBootAdminServerApplication {
 
 已经导入了acutator-starter，无需再手动导入
 
-![image-20220508130354739](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508130354739.png)
+![image-20220508130354739](D:\我的文件\gitRepository\cloud-image\img\image-20220508130354739.png)
 
 ###### 1.2 修改配置
 
@@ -4141,9 +4141,9 @@ management:
 
 > 启动完当前微服务项目，即自动注册到了8181的boot-server中
 
-![image-20220508131120234](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508131120234.png)
+![image-20220508131120234](D:\我的文件\gitRepository\cloud-image\img\image-20220508131120234.png)
 
-![image-20220508131200378](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508131200378.png)
+![image-20220508131200378](D:\我的文件\gitRepository\cloud-image\img\image-20220508131200378.png)
 
 
 
@@ -4204,9 +4204,9 @@ public String getSystemVariable() {
 }
 ```
 
-![image-20220508140901742](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508140901742.png)
+![image-20220508140901742](D:\我的文件\gitRepository\cloud-image\img\image-20220508140901742.png)
 
-![image-20220508140800614](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508140800614.png)
+![image-20220508140800614](D:\我的文件\gitRepository\cloud-image\img\image-20220508140800614.png)
 
 
 
@@ -4235,7 +4235,7 @@ public String getSystemVariable() {
 
 * mainApplicationClass  --> 推断出主程序：main方法
 
-  ![image-20220508183616895](https://gitee.com/yj1109/cloud-image/raw/master/img/image-20220508183616895.png)
+  ![image-20220508183616895](D:\我的文件\gitRepository\cloud-image\img\image-20220508183616895.png)
 
 
 
